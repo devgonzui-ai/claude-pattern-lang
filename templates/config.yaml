@@ -1,0 +1,24 @@
+# claude-pattern-lang 設定ファイル
+version: 1
+
+llm:
+  # LLMプロバイダ: anthropic | openai | local
+  provider: anthropic
+  # 使用するモデル
+  model: claude-sonnet-4-20250514
+  # APIキーの環境変数名
+  api_key_env: ANTHROPIC_API_KEY
+
+analysis:
+  # セッション終了時に自動解析するか
+  auto_analyze: false
+  # 解析対象の最小メッセージ数
+  min_session_length: 5
+  # 除外するパターン (glob)
+  exclude_patterns: []
+
+sync:
+  # 解析後に自動でCLAUDE.mdに反映するか
+  auto_sync: false
+  # 同期対象プロジェクト (glob)
+  target_projects: []

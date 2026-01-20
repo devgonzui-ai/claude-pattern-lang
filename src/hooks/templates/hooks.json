@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "SessionEnd": [
+      {
+        "matcher": "*",
+        "command": "cpl _hook-session-end"
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "*",
+        "command": "cpl _hook-stop"
+      }
+    ]
+  }
+}

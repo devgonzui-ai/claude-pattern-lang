@@ -1,0 +1,59 @@
+{
+  "name": "claude-pattern-lang",
+  "version": "0.1.0",
+  "description": "Claude Codeのセッションログからパターンを自動抽出・カタログ化するCLIツール",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "cpl": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "lint": "eslint src/",
+    "lint:fix": "eslint src/ --fix",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "format:check": "prettier --check \"src/**/*.ts\"",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "claude",
+    "claude-code",
+    "pattern-language",
+    "llm",
+    "ai",
+    "cli"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    "dist",
+    "templates",
+    "prompts"
+  ],
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "commander": "^12.1.0",
+    "js-yaml": "^4.1.0",
+    "chalk": "^5.4.1",
+    "cli-table3": "^0.6.5"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^22.10.5",
+    "@typescript-eslint/eslint-plugin": "^8.20.0",
+    "@typescript-eslint/parser": "^8.20.0",
+    "eslint": "^9.18.0",
+    "eslint-config-prettier": "^10.0.1",
+    "prettier": "^3.4.2",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.3",
+    "vitest": "^2.1.8"
+  }
+}

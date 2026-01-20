@@ -1,0 +1,27 @@
+<!-- BEGIN: claude-pattern-lang patterns (自動生成、手動編集しないでください) -->
+
+## パターンカタログ
+
+以下のパターンはセッションログから自動抽出されました。パターン名で参照することで、圧縮されたコンテキストを伝達できます。
+
+{{#each patterns}}
+### {{name}}
+
+- **タイプ**: {{type}}
+- **コンテキスト**: {{context}}
+{{#if problem}}- **問題**: {{problem}}{{/if}}
+- **解決策**: {{solution}}
+{{#if example}}
+- **例**:
+```
+{{example}}
+```
+{{/if}}
+{{#if example_prompt}}
+- **プロンプト例**: `{{example_prompt}}`
+{{/if}}
+{{#if tags}}- **タグ**: {{#each tags}}`{{this}}`{{#unless @last}}, {{/unless}}{{/each}}{{/if}}
+
+{{/each}}
+
+<!-- END: claude-pattern-lang patterns -->
