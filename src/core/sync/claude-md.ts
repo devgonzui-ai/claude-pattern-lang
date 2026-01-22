@@ -1,3 +1,9 @@
+import { fileExists, readTextFile, writeTextFile } from "../../utils/fs.js";
+import {
+  PATTERNS_SECTION_START,
+  PATTERNS_SECTION_END,
+} from "./merger.js";
+
 /**
  * CLAUDE.mdファイルの内容
  */
@@ -14,13 +20,44 @@ export interface ClaudeMdContent {
  * CLAUDE.mdを読み込んでパースする
  */
 export async function parseClaudeMd(
-  _filePath: string
+  filePath: string
 ): Promise<ClaudeMdContent> {
-  // TODO: 実装
+  // ファイルが存在しない場合は空のコンテンツを返す
+  if (!(await fileExists(filePath))) {
+    return {
+      beforePatterns: "",
+      patternsSection: null,
+      afterPatterns: "",
+    };
+  }
+
+  const content = await readTextFile(filePath);
+
+  // パターンセクションの開始と終了を探す
+  const startIdx = content.indexOf(PATTERNS_SECTION_START);
+  const endIdx = content.indexOf(PATTERNS_SECTION_END);
+
+  // パターンセクションがない場合
+  if (startIdx === -1 || endIdx === -1) {
+    return {
+      beforePatterns: content,
+      patternsSection: null,
+      afterPatterns: "",
+    };
+  }
+
+  // パターンセクションがある場合
+  const beforePatterns = content.substring(0, startIdx);
+  const patternsSection = content.substring(
+    startIdx,
+    endIdx + PATTERNS_SECTION_END.length
+  );
+  const afterPatterns = content.substring(endIdx + PATTERNS_SECTION_END.length);
+
   return {
-    beforePatterns: "",
-    patternsSection: null,
-    afterPatterns: "",
+    beforePatterns,
+    patternsSection,
+    afterPatterns,
   };
 }
 
@@ -28,8 +65,16 @@ export async function parseClaudeMd(
  * CLAUDE.mdにパターンセクションを書き込む
  */
 export async function writeClaudeMd(
-  _filePath: string,
-  _content: ClaudeMdContent
+  filePath: string,
+  content: ClaudeMdContent
 ): Promise<void> {
-  // TODO: 実装
+  let result = content.beforePatterns;
+
+  if (content.patternsSection !== null) {
+    result += content.patternsSection;
+  }
+
+  result += content.afterPatterns;
+
+  await writeTextFile(filePath, result);
 }

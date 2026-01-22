@@ -1,6 +1,7 @@
 import { mkdir, readFile, writeFile, access } from "node:fs/promises";
 import { dirname } from "node:path";
 import { homedir } from "node:os";
+import yaml from "js-yaml";
 
 /**
  * パターンディレクトリのパス
@@ -51,4 +52,40 @@ export async function writeTextFile(
 ): Promise<void> {
   await mkdir(dirname(path), { recursive: true });
   await writeFile(path, content, "utf-8");
+}
+
+/**
+ * ディレクトリを再帰的に作成する
+ */
+export async function ensureDir(dirPath: string): Promise<void> {
+  await mkdir(dirPath, { recursive: true });
+}
+
+/**
+ * YAMLファイルを読み込んでパースする
+ * ファイルが存在しない場合はnullを返す
+ */
+export async function readYaml<T>(filePath: string): Promise<T | null> {
+  try {
+    const content = await readFile(filePath, "utf-8");
+    if (!content.trim()) {
+      return null;
+    }
+    return yaml.load(content) as T;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      return null;
+    }
+    throw error;
+  }
+}
+
+/**
+ * オブジェクトをYAMLファイルとして書き込む
+ * 必要に応じて親ディレクトリを作成する
+ */
+export async function writeYaml<T>(filePath: string, data: T): Promise<void> {
+  await mkdir(dirname(filePath), { recursive: true });
+  const content = yaml.dump(data, { lineWidth: -1 });
+  await writeFile(filePath, content, "utf-8");
 }

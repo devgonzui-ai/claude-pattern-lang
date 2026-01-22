@@ -1,27 +1,69 @@
 /**
- * 機密情報をマスクするパターン
+ * マスク文字
  */
-const SENSITIVE_PATTERNS = [
-  // APIキー
-  /\b[A-Za-z0-9_-]{20,}(?:key|token|secret|password|credential)/gi,
-  // 一般的なAPI キー形式
-  /\bsk-[A-Za-z0-9]{32,}\b/g,
-  /\bxoxb-[A-Za-z0-9-]+\b/g,
-  /\bghp_[A-Za-z0-9]+\b/g,
-  // パスワード（key=value形式）
-  /(?:password|passwd|pwd|secret|api_key|apikey|token)[\s]*[:=][\s]*["']?[^\s"']+["']?/gi,
-  // メールアドレス
-  /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g,
-];
+const REDACTED = "[REDACTED]";
+
+/**
+ * APIキーパターン
+ */
+const API_KEY_PATTERN =
+  /(api[_-]?key)\s*[:=]\s*['"]?[^\s'"]+['"]?/gi;
+
+/**
+ * パスワード・シークレットパターン
+ */
+const PASSWORD_PATTERN =
+  /(password|passwd|pwd|secret)\s*[:=]\s*['"]?[^\s'"]+['"]?/gi;
+
+/**
+ * トークンパターン
+ */
+const TOKEN_PATTERN =
+  /(token)\s*[:=]\s*['"]?[^\s'"]+['"]?/gi;
+
+/**
+ * Bearer認証パターン
+ */
+const BEARER_PATTERN = /Bearer\s+[^\s]+/gi;
+
+/**
+ * Basic認証パターン
+ */
+const BASIC_PATTERN = /Basic\s+[^\s]+/gi;
+
+/**
+ * APIキーをマスクする
+ */
+export function maskApiKeys(text: string): string {
+  return text.replace(API_KEY_PATTERN, REDACTED);
+}
+
+/**
+ * パスワードをマスクする
+ */
+export function maskPasswords(text: string): string {
+  return text.replace(PASSWORD_PATTERN, REDACTED);
+}
+
+/**
+ * トークンをマスクする（Bearer/Basic認証含む）
+ */
+export function maskTokens(text: string): string {
+  let result = text;
+  result = result.replace(TOKEN_PATTERN, REDACTED);
+  result = result.replace(BEARER_PATTERN, REDACTED);
+  result = result.replace(BASIC_PATTERN, REDACTED);
+  return result;
+}
 
 /**
  * テキストから機密情報をマスクする
  */
 export function sanitize(text: string): string {
   let result = text;
-  for (const pattern of SENSITIVE_PATTERNS) {
-    result = result.replace(pattern, "[REDACTED]");
-  }
+  result = maskApiKeys(result);
+  result = maskPasswords(result);
+  result = maskTokens(result);
   return result;
 }
 

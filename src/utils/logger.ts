@@ -1,4 +1,5 @@
 import chalk from "chalk";
+import Table from "cli-table3";
 
 /**
  * ログレベル
@@ -75,4 +76,27 @@ export function error(message: string): void {
  */
 export function success(message: string): void {
   console.log(chalk.green(`✓ ${message}`));
+}
+
+/**
+ * テーブル形式でデータを表示する
+ */
+export function table(data: Record<string, string>[]): void {
+  if (data.length === 0) {
+    return;
+  }
+
+  const headers = Object.keys(data[0]);
+  const tableInstance = new Table({
+    head: headers,
+    style: {
+      head: ["cyan"],
+    },
+  });
+
+  for (const row of data) {
+    tableInstance.push(headers.map((h) => row[h] ?? ""));
+  }
+
+  console.log(tableInstance.toString());
 }

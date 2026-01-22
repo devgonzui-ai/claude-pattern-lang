@@ -29,3 +29,11 @@ npm-debug.log*
 # Cache
 .cache/
 *.tsbuildinfo
+.eslintcache
+
+# AI tools
+.claude/
+.kiro/
+
+# Package
+*.tgz

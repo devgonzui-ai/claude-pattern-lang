@@ -1,3 +1,6 @@
+import yaml from "js-yaml";
+import type { PatternInput, PatternType } from "../../types/index.js";
+
 /**
  * パターン抽出用プロンプトを生成する
  */
@@ -45,4 +48,95 @@ patterns:
 ## セッションログ
 
 ${sessionContent}`;
+}
+
+/**
+ * YAMLコードブロックからYAML文字列を抽出する
+ */
+function extractYamlFromCodeBlock(response: string): string {
+  // ```yaml ... ``` のコードブロックを抽出
+  const codeBlockMatch = response.match(/```(?:yaml)?\s*([\s\S]*?)```/);
+  if (codeBlockMatch) {
+    return codeBlockMatch[1].trim();
+  }
+  // コードブロックがない場合はそのまま返す
+  return response.trim();
+}
+
+/**
+ * 有効なPatternTypeかどうかを確認する
+ */
+function isValidPatternType(type: unknown): type is PatternType {
+  return type === "prompt" || type === "solution" || type === "code";
+}
+
+/**
+ * LLMレスポンスをパースしてPatternInput配列を返す
+ * @param yamlResponse - LLMからのYAMLレスポンス
+ * @returns PatternInput配列（パースに失敗した場合は空配列）
+ */
+export function parseExtractResponse(yamlResponse: string): PatternInput[] {
+  try {
+    const yamlContent = extractYamlFromCodeBlock(yamlResponse);
+    const parsed = yaml.load(yamlContent) as { patterns?: unknown[] } | null;
+
+    if (!parsed || !Array.isArray(parsed.patterns)) {
+      return [];
+    }
+
+    const patterns: PatternInput[] = [];
+
+    for (const item of parsed.patterns) {
+      if (typeof item !== "object" || item === null) {
+        continue;
+      }
+
+      const raw = item as Record<string, unknown>;
+
+      // 必須フィールドのチェック
+      if (
+        typeof raw.name !== "string" ||
+        typeof raw.context !== "string" ||
+        typeof raw.solution !== "string" ||
+        !isValidPatternType(raw.type)
+      ) {
+        continue;
+      }
+
+      const pattern: PatternInput = {
+        name: raw.name,
+        type: raw.type,
+        context: raw.context,
+        solution: raw.solution,
+      };
+
+      // オプショナルフィールドの追加
+      if (typeof raw.problem === "string") {
+        pattern.problem = raw.problem;
+      }
+      if (typeof raw.example === "string") {
+        pattern.example = raw.example;
+      }
+      if (typeof raw.example_prompt === "string") {
+        pattern.example_prompt = raw.example_prompt;
+      }
+      if (Array.isArray(raw.related)) {
+        pattern.related = raw.related.filter(
+          (r): r is string => typeof r === "string"
+        );
+      }
+      if (Array.isArray(raw.tags)) {
+        pattern.tags = raw.tags.filter(
+          (t): t is string => typeof t === "string"
+        );
+      }
+
+      patterns.push(pattern);
+    }
+
+    return patterns;
+  } catch {
+    // YAMLパースエラーの場合は空配列を返す
+    return [];
+  }
 }
