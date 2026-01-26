@@ -1,5 +1,6 @@
 import { spawn } from "node:child_process";
 import type { LLMClient } from "../client.js";
+import { claudeCodeTokenExtractor } from "../metrics/extractors/claude-code.js";
 
 /**
  * Claude CodeのCLIが利用可能かチェック
@@ -69,9 +70,13 @@ async function runClaudeCode(prompt: string): Promise<string> {
 /**
  * Claude Code CLIを使用するLLMクライアントを作成
  * APIキーが不要で、Claude Code内で実行する場合に使用
+ * @returns クライアントとトークン抽出器
  */
-export function createClaudeCodeClient(): LLMClient {
-  return {
+export function createClaudeCodeClient(): {
+  client: LLMClient;
+  extractor?: (response: any) => any;
+} {
+  const client: LLMClient = {
     async complete(prompt: string): Promise<string> {
       // Claude Codeが利用可能かチェック
       const available = await isClaudeCodeAvailable();
@@ -83,5 +88,10 @@ export function createClaudeCodeClient(): LLMClient {
 
       return runClaudeCode(prompt);
     },
+  };
+
+  return {
+    client,
+    extractor: claudeCodeTokenExtractor.extract,
   };
 }

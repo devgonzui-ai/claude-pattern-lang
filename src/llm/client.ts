@@ -1,4 +1,4 @@
-import type { LLMConfig } from "../types/index.js";
+import type { LLMConfig, MetricsConfig } from "../types/index.js";
 import { createAnthropicClient } from "./providers/anthropic.js";
 import { createOpenAIClient } from "./providers/openai.js";
 import { createGeminiClient } from "./providers/gemini.js";
@@ -9,6 +9,8 @@ import {
   createClaudeCodeClient,
   isClaudeCodeAvailable,
 } from "./providers/claude-code.js";
+import { MetricsCollectingClient } from "./metrics/wrapper.js";
+import { MetricsCollector } from "./metrics/collector.js";
 
 /**
  * LLMクライアントインターフェース
@@ -49,14 +51,40 @@ function needsClaudeCodeFallback(config: LLMConfig): boolean {
  * @param config - LLM設定
  * @param options - オプション
  * @param options.allowFallback - Claude Codeへのフォールバックを許可（デフォルト: true）
+ * @param options.metricsConfig - メトリクス設定
+ * @param options.commandName - コマンド名（メトリクス用）
+ * @param options.sessionId - セッションID（メトリクス用）
+ * @param options.metricsCollector - メトリクスコレクター
  * @returns LLMClientインターフェースを実装したオブジェクト
  * @throws サポートされていないプロバイダの場合、またはAPIキーが未設定でフォールバックも不可の場合
  */
 export async function createLLMClient(
   config: LLMConfig,
-  options: { allowFallback?: boolean } = {}
+  options: {
+    allowFallback?: boolean;
+    metricsConfig?: MetricsConfig;
+    commandName?: string;
+    sessionId?: string;
+    metricsCollector?: MetricsCollector;
+  } = {}
 ): Promise<LLMClient> {
-  const { allowFallback = true } = options;
+  const {
+    allowFallback = true,
+    metricsConfig,
+    commandName = "unknown",
+    sessionId,
+    metricsCollector,
+  } = options;
+
+  // メトリクス有効時の準備
+  const enableMetrics =
+    metricsConfig?.enabled &&
+    metricsCollector &&
+    (metricsConfig.track_tokens || metricsConfig.track_performance);
+
+  // メトリクスコレクターが未指定なら新規作成
+  const collector =
+    metricsCollector || (enableMetrics ? new MetricsCollector(sessionId) : undefined);
 
   // APIキーが未設定の場合、Claude Codeにフォールバック
   if (allowFallback && needsClaudeCodeFallback(config)) {
@@ -65,29 +93,72 @@ export async function createLLMClient(
       console.warn(
         `警告: ${config.api_key_env} が設定されていないため、Claude Codeを使用します。`
       );
-      return createClaudeCodeClient();
+      const result = createClaudeCodeClient();
+      if (enableMetrics && collector) {
+        return new MetricsCollectingClient(
+          result.client,
+          collector,
+          metricsConfig!,
+          "claude-code",
+          config.model,
+          commandName,
+          result.extractor
+        );
+      }
+      return result.client;
     }
     // Claude Codeも使えない場合は通常のエラーを出す
   }
 
+  let client: LLMClient;
+  let extractor: ((response: any) => any) | undefined;
+
   switch (config.provider) {
     case "anthropic":
-      return createAnthropicClient(config.model, config.api_key_env);
+      client = createAnthropicClient(config.model, config.api_key_env);
+      break;
     case "openai":
-      return createOpenAIClient(config.model, config.api_key_env, config.base_url);
+      client = createOpenAIClient(config.model, config.api_key_env, config.base_url);
+      break;
     case "gemini":
-      return createGeminiClient(config.model, config.api_key_env);
+      client = createGeminiClient(config.model, config.api_key_env);
+      break;
     case "ollama":
-      return createOllamaClient(config.model, config.base_url);
+      client = createOllamaClient(config.model, config.base_url);
+      break;
     case "deepseek":
-      return createDeepSeekClient(config.model, config.api_key_env);
-    case "zhipu":
-      return createZhipuClient(config.model, config.api_key_env);
-    case "claude-code":
-      return createClaudeCodeClient();
+      client = createDeepSeekClient(config.model, config.api_key_env);
+      break;
+    case "zhipu": {
+      const result = createZhipuClient(config.model, config.api_key_env);
+      client = result.client;
+      extractor = result.extractor;
+      break;
+    }
+    case "claude-code": {
+      const result = createClaudeCodeClient();
+      client = result.client;
+      extractor = result.extractor;
+      break;
+    }
     default: {
       const exhaustiveCheck: never = config.provider;
       throw new Error(`不明なプロバイダ: ${exhaustiveCheck}`);
     }
   }
+
+  // メトリクス有効時はラップして返す
+  if (enableMetrics && collector) {
+    return new MetricsCollectingClient(
+      client,
+      collector,
+      metricsConfig!,
+      config.provider,
+      config.model,
+      commandName,
+      extractor
+    );
+  }
+
+  return client;
 }

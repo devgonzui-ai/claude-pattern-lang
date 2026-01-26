@@ -2,12 +2,13 @@
 version: 1
 
 llm:
-  # LLMプロバイダ: anthropic | openai | local
-  provider: anthropic
+  # LLMプロバイダ: claude-code | zhipu
+  # (将来的に: anthropic | openai | gemini | ollama | deepseek)
+  provider: claude-code
   # 使用するモデル
-  model: claude-sonnet-4-20250514
-  # APIキーの環境変数名
-  api_key_env: ANTHROPIC_API_KEY
+  model: claude-opus-4-20250514
+  # APIキーの環境変数名 (claude-codeは不要)
+  api_key_env: ""
 
 analysis:
   # セッション終了時に自動解析するか

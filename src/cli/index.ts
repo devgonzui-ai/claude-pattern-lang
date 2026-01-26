@@ -6,3 +6,4 @@ export { syncCommand } from "./commands/sync.js";
 export { addCommand } from "./commands/add.js";
 export { removeCommand } from "./commands/remove.js";
 export { configCommand } from "./commands/config.js";
+export { metricsCommand } from "./commands/metrics.js";

@@ -8,6 +8,7 @@ import {
   addCommand,
   removeCommand,
   configCommand,
+  metricsCommand,
 } from "./cli/index.js";
 
 program
@@ -25,5 +26,6 @@ program.addCommand(syncCommand);
 program.addCommand(addCommand);
 program.addCommand(removeCommand);
 program.addCommand(configCommand);
+program.addCommand(metricsCommand);
 
 program.parse();

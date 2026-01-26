@@ -1,3 +1,5 @@
+import type { MetricsConfig, OutputLevel } from "./metrics.js";
+
 /**
  * LLMプロバイダ
  */
@@ -54,6 +56,7 @@ export interface Config {
   llm: LLMConfig;
   analysis: AnalysisConfig;
   sync: SyncConfig;
+  metrics: MetricsConfig;
 }
 
 /**
@@ -62,9 +65,9 @@ export interface Config {
 export const DEFAULT_CONFIG: Config = {
   version: 1,
   llm: {
-    provider: "anthropic",
-    model: "claude-sonnet-4-20250514",
-    api_key_env: "ANTHROPIC_API_KEY",
+    provider: "claude-code",
+    model: "claude-opus-4-20250514",
+    api_key_env: "",
   },
   analysis: {
     auto_analyze: false,
@@ -74,5 +77,13 @@ export const DEFAULT_CONFIG: Config = {
   sync: {
     auto_sync: false,
     target_projects: [],
+  },
+  metrics: {
+    enabled: false,
+    auto_save: true,
+    retention_days: 30,
+    output_level: "normal",
+    track_tokens: true,
+    track_performance: true,
   },
 };

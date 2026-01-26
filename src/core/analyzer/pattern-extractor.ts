@@ -7,6 +7,7 @@ import type {
 import { createLLMClient } from "../../llm/client.js";
 import { buildExtractPrompt, parseExtractResponse } from "../../llm/prompts/extract-patterns.js";
 import { sanitize } from "../../utils/sanitizer.js";
+import { MetricsCollector } from "../../llm/metrics/collector.js";
 
 /**
  * ツール結果の最大表示文字数
@@ -69,12 +70,14 @@ export function findDuplicatePatterns(
  * @param entries - セッションエントリ
  * @param existingPatterns - 既存のパターン（重複チェック用）
  * @param llmConfig - LLM設定
+ * @param collector - メトリクスコレクター（オプション）
  * @returns 抽出されたパターン（重複除外済み）
  */
 export async function extractPatterns(
   entries: SessionEntry[],
   existingPatterns: Pattern[],
-  llmConfig: LLMConfig
+  llmConfig: LLMConfig,
+  collector?: MetricsCollector
 ): Promise<PatternInput[]> {
   // 空のエントリは早期リターン
   if (entries.length === 0) {
@@ -91,7 +94,10 @@ export async function extractPatterns(
   const prompt = buildExtractPrompt(sanitizedContent);
 
   // LLMクライアントを作成して実行
-  const client = await createLLMClient(llmConfig);
+  const client = await createLLMClient(llmConfig, {
+    metricsCollector: collector,
+    commandName: "analyze",
+  });
   const response = await client.complete(prompt);
 
   // レスポンスをパース
