@@ -26,7 +26,8 @@ A CLI tool to automatically extract and catalog patterns from Claude Code sessio
 - **Duplicate Detection**: Automatic deduplication and merging
 - **Privacy Protection**: Automatic masking of sensitive information
 - **Incremental Analysis**: Only analyze new sessions since last run
-- **Multi-LLM Support**: Claude, OpenAI, Ollama, DeepSeek, Gemini, Zhipu AI
+- **Multi-LLM Support**: Claude Code, GLM (Zhipu)
+  - *Other providers (Anthropic, OpenAI, Gemini, Ollama, DeepSeek) are available for future releases*
 
 ## Installation
 
@@ -171,12 +172,13 @@ The configuration file is located at `~/.claude-patterns/config.yaml`:
 version: 1
 
 llm:
-  # LLM provider: anthropic | openai | ollama | deepseek | gemini | zhipu
-  provider: anthropic
+  # LLM provider: claude-code | zhipu
+  # (Other providers available for future releases)
+  provider: claude-code
   # Model to use
-  model: claude-sonnet-4-20250514
-  # API key environment variable
-  api_key_env: ANTHROPIC_API_KEY
+  model: claude-opus-4-20250514
+  # API key environment variable (not needed for claude-code)
+  api_key_env: ""
 
 analysis:
   # Auto-analyze on session end

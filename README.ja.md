@@ -26,7 +26,8 @@ Claude Codeのセッションログから自動的にパターンを抽出・カ
 - **重複検出**: 自動重複排除とマージ
 - **プライバシー保護**: 機密情報の自動マスキング
 - **増分解析**: 前回解析以降の新しいセッションのみを対象に処理
-- **マルチLLM対応**: Claude, OpenAI, Ollama, DeepSeek, Gemini, Zhipu AI
+- **マルチLLM対応**: Claude Code, GLM (Zhipu)
+  - *他のプロバイダ（Anthropic, OpenAI, Gemini, Ollama, DeepSeek）は将来のリリースで対応予定*
 
 ## インストール
 
@@ -171,12 +172,13 @@ cpl remove <pattern-name>
 version: 1
 
 llm:
-  # LLMプロバイダ: anthropic | openai | ollama | deepseek | gemini | zhipu
-  provider: anthropic
+  # LLMプロバイダ: claude-code | zhipu
+  # (他のプロバイダは将来のリリースで対応予定)
+  provider: claude-code
   # 使用するモデル
-  model: claude-sonnet-4-20250514
-  # APIキーの環境変数名
-  api_key_env: ANTHROPIC_API_KEY
+  model: claude-opus-4-20250514
+  # APIキーの環境変数名 (claude-codeは不要)
+  api_key_env: ""
 
 analysis:
   # セッション終了時に自動解析
