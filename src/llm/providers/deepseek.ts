@@ -2,17 +2,21 @@ import OpenAI from "openai";
 import type { LLMClient } from "../client.js";
 
 /**
- * OpenAI APIクライアントを作成する
- * @param model - 使用するモデル名 (例: "gpt-4o", "gpt-4-turbo")
- * @param apiKeyEnv - APIキーの環境変数名 (例: "OPENAI_API_KEY")
- * @param baseURL - カスタムベースURL (オプション)
+ * DeepSeek APIのベースURL
+ */
+const DEEPSEEK_BASE_URL = "https://api.deepseek.com";
+
+/**
+ * DeepSeek APIクライアントを作成する
+ * OpenAI互換APIを使用
+ * @param model - 使用するモデル名 (例: "deepseek-chat", "deepseek-reasoner")
+ * @param apiKeyEnv - APIキーの環境変数名 (例: "DEEPSEEK_API_KEY")
  * @returns LLMClientインターフェースを実装したオブジェクト
  * @throws 環境変数が設定されていない場合
  */
-export function createOpenAIClient(
+export function createDeepSeekClient(
   model: string,
-  apiKeyEnv: string,
-  baseURL?: string
+  apiKeyEnv: string
 ): LLMClient {
   const apiKey = process.env[apiKeyEnv];
 
@@ -22,7 +26,7 @@ export function createOpenAIClient(
 
   const client = new OpenAI({
     apiKey,
-    baseURL,
+    baseURL: DEEPSEEK_BASE_URL,
   });
 
   return {

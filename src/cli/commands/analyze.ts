@@ -9,7 +9,9 @@ import {
 import { extractPatterns } from "../../core/analyzer/pattern-extractor.js";
 import { loadCatalog, addPattern } from "../../core/catalog/store.js";
 import { info, success, error, warn } from "../../utils/logger.js";
-import type { LLMConfig, PatternInput } from "../../types/index.js";
+import { fileExists, readYaml, getConfigPath } from "../../utils/fs.js";
+import type { LLMConfig, PatternInput, Config } from "../../types/index.js";
+import { DEFAULT_CONFIG } from "../../types/config.js";
 import * as readline from "node:readline";
 
 interface AnalyzeOptions {
@@ -79,12 +81,19 @@ export const analyzeCommand = new Command("analyze")
 
       info(`${sessions.length} 件のセッションを解析します...`);
 
-      // LLM設定（デフォルト値）
-      const llmConfig: LLMConfig = {
-        provider: "anthropic",
-        model: "claude-sonnet-4-20250514",
-        api_key_env: "ANTHROPIC_API_KEY",
-      };
+      // LLM設定を読み込み（設定ファイルがなければデフォルト値を使用）
+      let llmConfig: LLMConfig = DEFAULT_CONFIG.llm;
+      const configPath = getConfigPath();
+      if (await fileExists(configPath)) {
+        const config = await readYaml<Config>(configPath);
+        if (config) {
+          llmConfig = config.llm;
+          info(`LLMプロバイダー: ${llmConfig.provider} (${llmConfig.model})`);
+        }
+      } else {
+        warn("設定ファイルが見つかりません。デフォルト設定を使用します。");
+        info("設定をカスタマイズするには `cpl init` を実行してください。");
+      }
 
       // 既存パターンを取得
       const catalog = await loadCatalog();

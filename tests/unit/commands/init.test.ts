@@ -28,7 +28,7 @@ describe("initAction", () => {
   it("ディレクトリと設定ファイルを作成する", async () => {
     vi.mocked(fs.fileExists).mockResolvedValue(false);
 
-    await initAction();
+    await initAction({ default: true });
 
     expect(fs.ensureDir).toHaveBeenCalled();
     expect(fs.writeYaml).toHaveBeenCalled();

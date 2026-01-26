@@ -7,6 +7,7 @@ import {
   syncCommand,
   addCommand,
   removeCommand,
+  configCommand,
 } from "./cli/index.js";
 
 program
@@ -23,5 +24,6 @@ program.addCommand(showCommand);
 program.addCommand(syncCommand);
 program.addCommand(addCommand);
 program.addCommand(removeCommand);
+program.addCommand(configCommand);
 
 program.parse();

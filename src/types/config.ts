@@ -1,7 +1,14 @@
 /**
  * LLMプロバイダ
  */
-export type LLMProvider = "anthropic" | "openai" | "local";
+export type LLMProvider =
+  | "anthropic"
+  | "openai"
+  | "gemini"
+  | "ollama"
+  | "deepseek"
+  | "zhipu"
+  | "claude-code";
 
 /**
  * LLM設定
@@ -13,6 +20,8 @@ export interface LLMConfig {
   model: string;
   /** APIキーの環境変数名 */
   api_key_env: string;
+  /** ベースURL (DeepSeek、Ollama等のカスタムエンドポイント用) */
+  base_url?: string;
 }
 
 /**
