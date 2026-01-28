@@ -7,6 +7,9 @@ dist/
 # Test coverage
 coverage/
 
+# Tests
+tests/
+
 # IDE
 .vscode/
 .idea/

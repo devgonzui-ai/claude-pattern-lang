@@ -1,4 +1,4 @@
-import type { MetricsConfig, OutputLevel } from "./metrics.js";
+import type { MetricsConfig } from "./metrics.js";
 
 /**
  * LLMプロバイダ

@@ -174,6 +174,14 @@ export async function initAction(options: InitOptions = {}): Promise<void> {
         auto_sync: false,
         target_projects: [],
       },
+      metrics: {
+        enabled: false,
+        auto_save: true,
+        retention_days: 30,
+        output_level: "normal",
+        track_tokens: true,
+        track_performance: true,
+      },
     };
 
     // ディレクトリ作成

@@ -5,10 +5,10 @@ import { unavailableTokenUsage } from "./interface.js";
 /**
  * Zhipu AI API レスポンスからトークン使用量を抽出
  */
-export const zhipuTokenExtractor: TokenExtractor = {
-  extract(response: any): TokenUsage {
+export const zhipuTokenExtractor: TokenExtractor<unknown> = {
+  extract(response: unknown): TokenUsage {
     try {
-      const usage = response?.usage;
+      const usage = (response as { usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number } })?.usage;
       if (!usage) {
         return unavailableTokenUsage;
       }

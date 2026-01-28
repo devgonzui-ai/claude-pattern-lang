@@ -3,7 +3,7 @@ import type { TokenUsage } from "../../../types/index.js";
 /**
  * トークン抽出インターフェース
  */
-export interface TokenExtractor<T = any> {
+export interface TokenExtractor<T = unknown> {
   /**
    * レスポンスからトークン使用量を抽出
    */

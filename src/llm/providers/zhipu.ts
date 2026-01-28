@@ -12,7 +12,7 @@ import { zhipuTokenExtractor } from "../metrics/extractors/zhipu.js";
 export function createZhipuClient(
   model: string,
   apiKeyEnv: string
-): { client: LLMClient; extractor?: (response: any) => any } {
+): { client: LLMClient; extractor?: typeof zhipuTokenExtractor } {
   const apiKey = process.env[apiKeyEnv];
 
   if (!apiKey) {
@@ -45,6 +45,6 @@ export function createZhipuClient(
 
   return {
     client,
-    extractor: zhipuTokenExtractor.extract,
+    extractor: zhipuTokenExtractor,
   };
 }

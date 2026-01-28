@@ -5,8 +5,8 @@ import { unavailableTokenUsage } from "./interface.js";
 /**
  * Claude Code CLIからはトークン情報が取得不可
  */
-export const claudeCodeTokenExtractor: TokenExtractor = {
-  extract(_response: any): TokenUsage {
+export const claudeCodeTokenExtractor: TokenExtractor<unknown> = {
+  extract(_response: unknown): TokenUsage {
     return unavailableTokenUsage;
   },
 };

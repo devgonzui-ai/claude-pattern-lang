@@ -1,7 +1,7 @@
 import { Command } from "commander";
 import { MetricsStorage } from "../../llm/metrics/storage.js";
 import { displayMetricsHistory, displayStatistics } from "../../utils/formatters.js";
-import { info, success, warn, error } from "../../utils/logger.js";
+import { info, success, error } from "../../utils/logger.js";
 
 interface MetricsOptions {
   clear?: boolean;
@@ -30,8 +30,8 @@ export const metricsCommand = new Command("metrics")
 
       // 統計オプションのみ
       if (options.stats) {
-        const stats = await storage.getStatistics(options.days);
-        displayStatistics(stats, options.days!);
+        const stats = await storage.getStatistics(options.days ?? 7);
+        displayStatistics(stats, options.days ?? 7);
         return;
       }
 
@@ -39,8 +39,8 @@ export const metricsCommand = new Command("metrics")
       const commands = await storage.getRecentCommands(20);
       displayMetricsHistory(commands);
 
-      const stats = await storage.getStatistics(options.days);
-      displayStatistics(stats, options.days);
+      const stats = await storage.getStatistics(options.days ?? 7);
+      displayStatistics(stats, options.days ?? 7);
 
       // ヒント
       info("\n💡 ヒント:");

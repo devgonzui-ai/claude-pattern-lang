@@ -1,5 +1,6 @@
 import { Command } from "commander";
 import yaml from "js-yaml";
+import * as cliProgress from "cli-progress";
 import {
   listSessions,
   parseSessionLog,
@@ -116,14 +117,22 @@ export const analyzeCommand = new Command("analyze")
       // 各セッションを解析
       const allExtracted: PatternInput[] = [];
 
-      for (const session of sessions) {
-        info(`セッション ${session.id} を解析中...`);
+      // プログレスバーの作成
+      const progressBar = new cliProgress.SingleBar({
+        format: '解析中 |{bar}| {percentage}% | {value}/{total} セッション | パターン数: {patterns}',
+        barCompleteChar: '\u2588',
+        barIncompleteChar: '\u2591',
+        hideCursor: true,
+      });
 
+      progressBar.start(sessions.length, 0, { patterns: 0 });
+
+      for (const session of sessions) {
         try {
           const entries = await parseSessionLog(session.path);
 
           if (entries.length === 0) {
-            warn(`セッション ${session.id} にエントリがありません。`);
+            progressBar.increment({ patterns: allExtracted.length });
             continue;
           }
 
@@ -136,14 +145,16 @@ export const analyzeCommand = new Command("analyze")
 
           if (patterns.length > 0) {
             allExtracted.push(...patterns);
-            info(`${patterns.length} 件のパターンを抽出しました。`);
-          } else {
-            info("新しいパターンは見つかりませんでした。");
           }
+
+          progressBar.increment({ patterns: allExtracted.length });
         } catch (err) {
-          error(`セッション ${session.id} の解析中にエラー: ${err}`);
+          error(`\nセッション ${session.id} の解析中にエラー: ${err}`);
+          progressBar.increment({ patterns: allExtracted.length });
         }
       }
+
+      progressBar.stop();
 
       // コマンド終了
       let commandMetrics = null;

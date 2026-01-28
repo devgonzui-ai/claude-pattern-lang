@@ -1,4 +1,5 @@
 import type { LLMConfig, MetricsConfig } from "../types/index.js";
+import type { TokenExtractor } from "./metrics/extractors/interface.js";
 import { createAnthropicClient } from "./providers/anthropic.js";
 import { createOpenAIClient } from "./providers/openai.js";
 import { createGeminiClient } from "./providers/gemini.js";
@@ -111,7 +112,7 @@ export async function createLLMClient(
   }
 
   let client: LLMClient;
-  let extractor: ((response: any) => any) | undefined;
+  let extractor: TokenExtractor | undefined;
 
   switch (config.provider) {
     case "anthropic":

@@ -9,7 +9,6 @@ export async function isClaudeCodeAvailable(): Promise<boolean> {
   return new Promise((resolve) => {
     const proc = spawn("claude", ["--version"], {
       stdio: ["pipe", "pipe", "pipe"],
-      shell: true,
     });
 
     proc.on("error", () => {
@@ -33,9 +32,9 @@ export async function isClaudeCodeAvailable(): Promise<boolean> {
  */
 async function runClaudeCode(prompt: string): Promise<string> {
   return new Promise((resolve, reject) => {
+    // stdinを"ignore"にしないとclaudeコマンドが入力待ちで止まる
     const proc = spawn("claude", ["-p", prompt, "--output-format", "text"], {
-      stdio: ["pipe", "pipe", "pipe"],
-      shell: true,
+      stdio: ["ignore", "pipe", "pipe"],
     });
 
     let stdout = "";
@@ -74,7 +73,7 @@ async function runClaudeCode(prompt: string): Promise<string> {
  */
 export function createClaudeCodeClient(): {
   client: LLMClient;
-  extractor?: (response: any) => any;
+  extractor?: typeof claudeCodeTokenExtractor;
 } {
   const client: LLMClient = {
     async complete(prompt: string): Promise<string> {
@@ -92,6 +91,6 @@ export function createClaudeCodeClient(): {
 
   return {
     client,
-    extractor: claudeCodeTokenExtractor.extract,
+    extractor: claudeCodeTokenExtractor,
   };
 }

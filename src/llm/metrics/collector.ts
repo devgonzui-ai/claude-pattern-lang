@@ -1,7 +1,6 @@
 import type {
   CommandMetrics,
   LLMMetrics,
-  PerformanceMetrics,
   TokenUsage,
 } from "../../types/index.js";
 
@@ -11,7 +10,6 @@ import type {
 export class MetricsCollector {
   private llmMetrics: LLMMetrics[] = [];
   private commandStartTime: number = 0;
-  private currentCommand: string = "";
   private currentLLMStartTime: number = 0;
   private sessionId: string;
 
@@ -36,8 +34,7 @@ export class MetricsCollector {
   /**
    * コマンド開始を記録
    */
-  startCommand(commandName: string): void {
-    this.currentCommand = commandName;
+  startCommand(_commandName: string): void {
     this.commandStartTime = performance.now();
   }
 
@@ -171,7 +168,6 @@ export class MetricsCollector {
   clear(): void {
     this.llmMetrics = [];
     this.commandStartTime = 0;
-    this.currentCommand = "";
     this.currentLLMStartTime = 0;
   }
 }
