@@ -5,7 +5,6 @@ import { createOpenAIClient } from "./providers/openai.js";
 import { createGeminiClient } from "./providers/gemini.js";
 import { createOllamaClient } from "./providers/ollama.js";
 import { createDeepSeekClient } from "./providers/deepseek.js";
-import { createZhipuClient } from "./providers/zhipu.js";
 import {
   createClaudeCodeClient,
   isClaudeCodeAvailable,
@@ -130,12 +129,6 @@ export async function createLLMClient(
     case "deepseek":
       client = createDeepSeekClient(config.model, config.api_key_env);
       break;
-    case "zhipu": {
-      const result = createZhipuClient(config.model, config.api_key_env);
-      client = result.client;
-      extractor = result.extractor;
-      break;
-    }
     case "claude-code": {
       const result = createClaudeCodeClient();
       client = result.client;

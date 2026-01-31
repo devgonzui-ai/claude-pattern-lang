@@ -69,9 +69,11 @@ describe("claude-code provider", () => {
 
   describe("createClaudeCodeClient", () => {
     it("LLMClientインターフェースを実装したオブジェクトを返す", () => {
-      const client = createClaudeCodeClient();
-      expect(client).toBeDefined();
-      expect(typeof client.complete).toBe("function");
+      const result = createClaudeCodeClient();
+      expect(result).toBeDefined();
+      expect(result.client).toBeDefined();
+      expect(typeof result.client.complete).toBe("function");
+      expect(result.extractor).toBeDefined();
     });
   });
 });

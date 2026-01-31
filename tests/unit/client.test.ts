@@ -89,21 +89,6 @@ describe("client", () => {
       expect(typeof client.complete).toBe("function");
     });
 
-    it("zhipuプロバイダの場合、Zhipuクライアントを返す", async () => {
-      process.env.ZHIPUAI_API_KEY = "test-api-key";
-
-      const config: LLMConfig = {
-        provider: "zhipu",
-        model: "glm-4",
-        api_key_env: "ZHIPUAI_API_KEY",
-      };
-
-      const client = await createLLMClient(config);
-
-      expect(client).toBeDefined();
-      expect(typeof client.complete).toBe("function");
-    });
-
     it("openaiプロバイダでカスタムbase_urlを使用できる", async () => {
       process.env.OPENAI_API_KEY = "test-api-key";
 

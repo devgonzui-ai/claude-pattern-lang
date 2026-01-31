@@ -2,7 +2,7 @@
 version: 1
 
 llm:
-  # LLMプロバイダ: claude-code | zhipu
+  # LLMプロバイダ: claude-code
   # (将来的に: anthropic | openai | gemini | ollama | deepseek)
   provider: claude-code
   # 使用するモデル

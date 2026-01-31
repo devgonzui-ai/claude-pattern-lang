@@ -7,8 +7,9 @@ import {
   getConfigPath,
   getCatalogPath,
 } from "../../utils/fs.js";
-import { info, success, warn, error } from "../../utils/logger.js";
+import { info, success, warn, error, stringifyError } from "../../utils/logger.js";
 import type { Config, PatternCatalog, LLMProvider, LLMConfig } from "../../types/index.js";
+import { t } from "../../i18n/index.js";
 
 /**
  * プロバイダーごとのデフォルト設定
@@ -34,10 +35,6 @@ const providerDefaults: Record<LLMProvider, Omit<LLMConfig, "provider">> = {
   deepseek: {
     model: "deepseek-chat",
     api_key_env: "DEEPSEEK_API_KEY",
-  },
-  zhipu: {
-    model: "glm-4",
-    api_key_env: "ZHIPUAI_API_KEY",
   },
   "claude-code": {
     model: "claude-code",
@@ -72,15 +69,14 @@ async function promptLLMConfig(): Promise<LLMConfig> {
 
   // プロバイダー選択
   const provider = await select<LLMProvider>({
-    message: "LLMプロバイダーを選択してください",
+    message: t("messages.config.selectProvider"),
     choices: [
-      { value: "anthropic", name: "Anthropic (Claude)" },
-      { value: "openai", name: "OpenAI (GPT-4)" },
-      { value: "gemini", name: "Google Gemini" },
-      { value: "ollama", name: "Ollama (ローカル)" },
-      { value: "deepseek", name: "DeepSeek" },
-      { value: "zhipu", name: "Zhipu AI (GLM)" },
-      { value: "claude-code", name: "Claude Code (APIキー不要)" },
+      { value: "anthropic", name: t("providers.anthropic") },
+      { value: "openai", name: t("providers.openai") },
+      { value: "gemini", name: t("providers.gemini") },
+      { value: "ollama", name: t("providers.ollama") },
+      { value: "deepseek", name: t("providers.deepseek") },
+      { value: "claude-code", name: t("providers.claudeCode") },
     ],
   });
 
@@ -97,7 +93,7 @@ async function promptLLMConfig(): Promise<LLMConfig> {
 
   // モデル入力
   const model = await input({
-    message: "モデルを入力してください",
+    message: t("messages.config.inputModel"),
     default: defaults.model,
   });
 
@@ -105,7 +101,7 @@ async function promptLLMConfig(): Promise<LLMConfig> {
   let api_key_env = "";
   if (provider !== "ollama") {
     api_key_env = await input({
-      message: "APIキーの環境変数名を入力してください",
+      message: t("messages.config.inputApiKeyEnv"),
       default: defaults.api_key_env,
     });
   }
@@ -114,7 +110,7 @@ async function promptLLMConfig(): Promise<LLMConfig> {
   let base_url: string | undefined;
   if (provider === "ollama") {
     base_url = await input({
-      message: "Ollamaホストを入力してください",
+      message: t("messages.config.inputOllamaHost"),
       default: defaults.base_url || "http://localhost:11434",
     });
   }
@@ -146,7 +142,7 @@ export async function initAction(options: InitOptions = {}): Promise<void> {
 
     // 既存の設定があるかチェック
     if (await fileExists(configPath)) {
-      warn("設定ファイルは既に存在します。上書きする場合は手動で削除してください。");
+      warn(t("messages.init.configExists"));
       return;
     }
 
@@ -155,15 +151,16 @@ export async function initAction(options: InitOptions = {}): Promise<void> {
     if (options.default) {
       // デフォルト値を使用
       llmConfig = getDefaultLLMConfig();
-      info("デフォルト設定を使用します (Anthropic Claude)");
+      info(t("messages.init.usingDefault"));
     } else {
       // インタラクティブにLLM設定を取得
-      info("LLM設定を構成します...");
+      info(t("messages.init.configuringLlm"));
       llmConfig = await promptLLMConfig();
     }
 
     const config: Config = {
       version: 1,
+      language: "en",
       llm: llmConfig,
       analysis: {
         auto_analyze: false,
@@ -185,35 +182,35 @@ export async function initAction(options: InitOptions = {}): Promise<void> {
     };
 
     // ディレクトリ作成
-    info(`ディレクトリを作成中: ${patternsDir}`);
+    info(t("messages.init.creatingDir", { path: patternsDir }));
     await ensureDir(patternsDir);
 
     // 設定ファイル作成
-    info(`設定ファイルを作成中: ${configPath}`);
+    info(t("messages.init.creatingConfig", { path: configPath }));
     await writeYaml(configPath, config);
 
     // カタログファイル作成（存在しない場合のみ）
     if (!(await fileExists(catalogPath))) {
-      info(`カタログファイルを作成中: ${catalogPath}`);
+      info(t("messages.init.creatingCatalog", { path: catalogPath }));
       await writeYaml(catalogPath, emptyCatalog);
     }
 
-    success("初期化が完了しました!");
+    success(t("messages.init.completed"));
     info("");
-    info("次のステップ:");
+    info(t("messages.init.nextSteps"));
     if (llmConfig.api_key_env) {
-      info(`  1. ${llmConfig.api_key_env} 環境変数を設定してください`);
+      info(t("messages.init.step1ApiKey", { envVar: llmConfig.api_key_env }));
     } else {
-      info(`  1. Ollamaサーバーが起動していることを確認してください`);
+      info(t("messages.init.step1Ollama"));
     }
-    info("  2. `cpl analyze` でセッションを解析してパターンを抽出");
-    info("  3. `cpl sync` でCLAUDE.mdにパターンを同期");
+    info(t("messages.init.step2Analyze"));
+    info(t("messages.init.step3Sync"));
     info("");
-    info("Claude Codeフックを有効にするには:");
-    info("  ~/.claude/settings.json にフック設定を追加後、");
-    info("  Claude Code内で `/hooks` を実行して承認してください。");
+    info(t("messages.init.hookInstructions"));
+    info(t("messages.init.hookStep1"));
+    info(t("messages.init.hookStep2"));
   } catch (err) {
-    error(`初期化中にエラーが発生しました: ${err}`);
+    error(t("messages.init.error", { error: stringifyError(err) }));
   }
 }
 
@@ -224,6 +221,6 @@ export async function initAction(options: InitOptions = {}): Promise<void> {
  * - Claude Codeフック設定を ~/.claude/settings.json に追加
  */
 export const initCommand = new Command("init")
-  .description("ツールの初期設定を行う")
-  .option("--default", "デフォルト設定を使用 (インタラクティブ入力をスキップ)")
+  .description(t("cli.commands.init.description"))
+  .option("--default", t("cli.commands.init.options.default"))
   .action(initAction);

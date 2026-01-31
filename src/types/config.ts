@@ -1,6 +1,11 @@
 import type { MetricsConfig } from "./metrics.js";
 
 /**
+ * サポート言語
+ */
+export type Language = "en" | "ja";
+
+/**
  * LLMプロバイダ
  */
 export type LLMProvider =
@@ -9,7 +14,6 @@ export type LLMProvider =
   | "gemini"
   | "ollama"
   | "deepseek"
-  | "zhipu"
   | "claude-code";
 
 /**
@@ -53,6 +57,7 @@ export interface SyncConfig {
  */
 export interface Config {
   version: number;
+  language: Language;
   llm: LLMConfig;
   analysis: AnalysisConfig;
   sync: SyncConfig;
@@ -64,6 +69,7 @@ export interface Config {
  */
 export const DEFAULT_CONFIG: Config = {
   version: 1,
+  language: "en",
   llm: {
     provider: "claude-code",
     model: "claude-opus-4-20250514",

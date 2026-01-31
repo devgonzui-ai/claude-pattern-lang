@@ -4,7 +4,7 @@
 [![License: MIT](https://img.shields.io/npm/l/claude-pattern-lang)](LICENSE)
 [![Node: >=18.0.0](https://img.shields.io/node/v/claude-pattern-lang)](https://nodejs.org)
 
-Claude Codeのセッションログから自動的にパターンを抽出・カタログ化するCLIツール。圧縮された知識をパターン・ランゲージとして管理し、以降のセッションでClaudeが参照・活用できるようにします。
+Claude Codeのセッションログから自動的にパターンを抽出・カタログ化するCLIツール。効果的なアプローチをパターン・ランゲージとして蓄積し、以降のセッションでClaudeが参照することで、タスク完了の高速化とコード品質の一貫性向上を実現します。
 
 ## 概要
 
@@ -12,10 +12,12 @@ Claude Codeのセッションログから自動的にパターンを抽出・カ
 
 ### パターン・ランゲージとは？
 
-- **圧縮された知識**: パターン名だけで複雑なコンテキストを効率的に伝達
+- **タスク完了の高速化**: パターンがClaudeを正解に直接導き、会話ターン数を約35%削減
+- **コード品質の一貫性**: テンプレートにより統一されたコーディングスタイルを実現、コード量を約44%削減
 - **再利用可能な解決策**: 効果的なアプローチを将来のセッションでも活用
-- **コンテキスト効率**: LLMのコンテキストウィンドウを最大限に活用
 - **自動発見**: 手動でのドキュメント作成は不要
+
+> **検証結果**: テストでは、パターンありのプロジェクトでAPI実装タスクが9ターンで完了（パターンなしは14ターン）。生成コードも39行の一貫した実装 vs 69行のアドホックな実装という結果に。詳細は[検証レポート](docs/validation-report-patterns-effect.ja.md)を参照。
 
 ## 機能
 
@@ -26,7 +28,7 @@ Claude Codeのセッションログから自動的にパターンを抽出・カ
 - **重複検出**: 自動重複排除とマージ
 - **プライバシー保護**: 機密情報の自動マスキング
 - **増分解析**: 前回解析以降の新しいセッションのみを対象に処理
-- **マルチLLM対応**: Claude Code, GLM (Zhipu)
+- **マルチLLM対応**: Claude Code
   - *他のプロバイダ（Anthropic, OpenAI, Gemini, Ollama, DeepSeek）は将来のリリースで対応予定*
 
 ## インストール
@@ -131,12 +133,70 @@ cpl sync --global
 # 対話的にパターンを追加
 cpl add
 
+# 対話的にパターンを作成（add -i のエイリアス）
+cpl create
+
 # YAMLファイルから追加
 cpl add --file pattern.yaml
 
 # パターンを削除
 cpl remove <pattern-name>
 ```
+
+### 分析・統計
+
+目的の異なる2つの分析コマンドがあります：
+
+#### `cpl session` - Claude Codeセッション分析
+
+**Claude Codeの会話ログ**からトークン使用量を分析します。セッションでのコンテキスト効率を把握するのに使います。
+
+```bash
+# 現在のプロジェクトの最新セッションを分析
+cpl session
+
+# 現在のプロジェクトの全セッションを分析
+cpl session --all
+
+# 特定プロジェクトのセッションを分析
+cpl session --project /path/to/project
+
+# 特定のセッションファイルを分析
+cpl session ~/.claude/projects/.../session-id.jsonl
+```
+
+**出力内容：**
+- メッセージ数（会話ターン数）
+- 入力/出力トークン
+- キャッシュ作成/読み取りトークン
+- キャッシュ効率（%）
+
+#### `cpl metrics` - cplツール使用統計
+
+**cplツール自体**の使用統計を記録します（`cpl analyze`実行時など）。パターン抽出活動をモニタリングするのに使います。
+
+```bash
+# メトリクス履歴と統計を表示
+cpl metrics
+
+# 統計のみ表示
+cpl metrics --stats
+
+# 過去30日間の統計を表示
+cpl metrics --days 30
+
+# メトリクスをクリア
+cpl metrics --clear
+```
+
+**主な違い：**
+
+| 観点 | `cpl session` | `cpl metrics` |
+|------|---------------|---------------|
+| **対象** | Claude Codeの会話 | cplツールの使用 |
+| **データソース** | `~/.claude/projects/**/*.jsonl` | `~/.claude-patterns/metrics.yaml` |
+| **用途** | セッション効率の分析 | パターン抽出活動の追跡 |
+| **追跡するトークン** | Claude CodeのLLM呼び出し | cplのLLM呼び出し（analyze時） |
 
 ## パターンタイプ
 
@@ -172,7 +232,7 @@ cpl remove <pattern-name>
 version: 1
 
 llm:
-  # LLMプロバイダ: claude-code | zhipu
+  # LLMプロバイダ: claude-code
   # (他のプロバイダは将来のリリースで対応予定)
   provider: claude-code
   # 使用するモデル

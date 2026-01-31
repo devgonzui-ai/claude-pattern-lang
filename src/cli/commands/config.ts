@@ -5,8 +5,9 @@ import {
   writeYaml,
   getConfigPath,
 } from "../../utils/fs.js";
-import { info, success, warn, error } from "../../utils/logger.js";
+import { info, success, error, stringifyError } from "../../utils/logger.js";
 import type { Config, LLMProvider, LLMConfig } from "../../types/index.js";
+import { t, initI18n } from "../../i18n/index.js";
 
 /**
  * プロバイダーごとのデフォルト設定
@@ -33,10 +34,6 @@ const providerDefaults: Record<LLMProvider, Omit<LLMConfig, "provider">> = {
     model: "deepseek-chat",
     api_key_env: "DEEPSEEK_API_KEY",
   },
-  zhipu: {
-    model: "glm-4",
-    api_key_env: "ZHIPUAI_API_KEY",
-  },
   "claude-code": {
     model: "claude-code",
     api_key_env: "",
@@ -50,33 +47,51 @@ async function showConfig(): Promise<void> {
   const configPath = getConfigPath();
 
   if (!(await fileExists(configPath))) {
-    warn("設定ファイルが見つかりません。`cpl init` を実行してください。");
+    error(t("messages.config.notFound"));
+    info(t("messages.config.runInitFirst"));
     return;
   }
 
   const config = await readYaml<Config>(configPath);
 
   if (!config) {
-    error("設定ファイルの読み込みに失敗しました。");
+    error(t("messages.config.loadError"));
     return;
   }
 
-  info("現在のLLM設定:");
-  info(`  プロバイダー: ${config.llm.provider}`);
-  info(`  モデル: ${config.llm.model}`);
+  info("llm:");
+  info(`  provider: ${config.llm.provider}`);
+  info(`  model: ${config.llm.model}`);
   if (config.llm.api_key_env) {
-    info(`  APIキー環境変数: ${config.llm.api_key_env}`);
+    info(`  api_key_env: ${config.llm.api_key_env}`);
   }
   if (config.llm.base_url) {
-    info(`  ベースURL: ${config.llm.base_url}`);
+    info(`  base_url: ${config.llm.base_url}`);
   }
-  info("");
-  info("解析設定:");
-  info(`  自動解析: ${config.analysis.auto_analyze}`);
-  info(`  最小セッション長: ${config.analysis.min_session_length}`);
-  info("");
-  info("同期設定:");
-  info(`  自動同期: ${config.sync.auto_sync}`);
+  info("analysis:");
+  info(`  auto_analyze: ${config.analysis.auto_analyze}`);
+  info(`  min_session_length: ${config.analysis.min_session_length}`);
+  if (config.analysis.exclude_patterns.length > 0) {
+    info(`  exclude_patterns:`);
+    for (const pattern of config.analysis.exclude_patterns) {
+      info(`    - ${pattern}`);
+    }
+  }
+  info("sync:");
+  info(`  auto_sync: ${config.sync.auto_sync}`);
+  if (config.sync.target_projects.length > 0) {
+    info(`  target_projects:`);
+    for (const project of config.sync.target_projects) {
+      info(`    - ${project}`);
+    }
+  }
+  info("metrics:");
+  info(`  enabled: ${config.metrics.enabled}`);
+  info(`  auto_save: ${config.metrics.auto_save}`);
+  info(`  retention_days: ${config.metrics.retention_days}`);
+  info(`  output_level: ${config.metrics.output_level}`);
+  info(`  track_tokens: ${config.metrics.track_tokens}`);
+  info(`  track_performance: ${config.metrics.track_performance}`);
 }
 
 /**
@@ -86,14 +101,15 @@ async function changeProvider(): Promise<void> {
   const configPath = getConfigPath();
 
   if (!(await fileExists(configPath))) {
-    warn("設定ファイルが見つかりません。`cpl init` を実行してください。");
+    error(t("messages.config.notFound"));
+    info(t("messages.config.runInitFirst"));
     return;
   }
 
   const config = await readYaml<Config>(configPath);
 
   if (!config) {
-    error("設定ファイルの読み込みに失敗しました。");
+    error(t("messages.config.loadError"));
     return;
   }
 
@@ -102,16 +118,15 @@ async function changeProvider(): Promise<void> {
 
   // プロバイダー選択
   const provider = await select<LLMProvider>({
-    message: "LLMプロバイダーを選択してください",
+    message: t("messages.config.selectProvider"),
     default: config.llm.provider,
     choices: [
-      { value: "anthropic", name: "Anthropic (Claude)" },
-      { value: "openai", name: "OpenAI (GPT-4)" },
-      { value: "gemini", name: "Google Gemini" },
-      { value: "ollama", name: "Ollama (ローカル)" },
-      { value: "deepseek", name: "DeepSeek" },
-      { value: "zhipu", name: "Zhipu AI (GLM)" },
-      { value: "claude-code", name: "Claude Code (APIキー不要)" },
+      { value: "anthropic", name: t("providers.anthropic") },
+      { value: "openai", name: t("providers.openai") },
+      { value: "gemini", name: t("providers.gemini") },
+      { value: "ollama", name: t("providers.ollama") },
+      { value: "deepseek", name: t("providers.deepseek") },
+      { value: "claude-code", name: t("providers.claudeCode") },
     ],
   });
 
@@ -125,13 +140,13 @@ async function changeProvider(): Promise<void> {
       api_key_env: "",
     };
     await writeYaml(configPath, config);
-    success("設定を更新しました!");
+    success(t("messages.config.updated"));
     return;
   }
 
   // モデル入力
   const model = await input({
-    message: "モデルを入力してください",
+    message: t("messages.config.inputModel"),
     default: provider === config.llm.provider ? config.llm.model : defaults.model,
   });
 
@@ -139,7 +154,7 @@ async function changeProvider(): Promise<void> {
   let api_key_env = "";
   if (provider !== "ollama") {
     api_key_env = await input({
-      message: "APIキーの環境変数名を入力してください",
+      message: t("messages.config.inputApiKeyEnv"),
       default: provider === config.llm.provider ? config.llm.api_key_env : defaults.api_key_env,
     });
   }
@@ -148,7 +163,7 @@ async function changeProvider(): Promise<void> {
   let base_url: string | undefined;
   if (provider === "ollama") {
     base_url = await input({
-      message: "Ollamaホストを入力してください",
+      message: t("messages.config.inputOllamaHost"),
       default: config.llm.base_url || defaults.base_url || "http://localhost:11434",
     });
   }
@@ -162,7 +177,7 @@ async function changeProvider(): Promise<void> {
   };
 
   await writeYaml(configPath, config);
-  success("設定を更新しました!");
+  success(t("messages.config.updated"));
 }
 
 /**
@@ -173,13 +188,14 @@ async function setConfigValue(keyValue: string): Promise<void> {
   const configPath = getConfigPath();
 
   if (!(await fileExists(configPath))) {
-    warn("設定ファイルが見つかりません。`cpl init` を実行してください。");
+    error(t("messages.config.notFound"));
+    info(t("messages.config.runInitFirst"));
     return;
   }
 
   const match = keyValue.match(/^([^=]+)=(.*)$/);
   if (!match) {
-    error("形式が不正です。'key=value' の形式で指定してください。");
+    error(t("messages.config.invalidFormat"));
     return;
   }
 
@@ -187,7 +203,7 @@ async function setConfigValue(keyValue: string): Promise<void> {
   const config = await readYaml<Config>(configPath);
 
   if (!config) {
-    error("設定ファイルの読み込みに失敗しました。");
+    error(t("messages.config.loadError"));
     return;
   }
 
@@ -198,7 +214,7 @@ async function setConfigValue(keyValue: string): Promise<void> {
   let target: any = config;
   for (let i = 0; i < keys.length - 1; i++) {
     if (!(keys[i] in target)) {
-      error(`キー '${key}' が見つかりません。`);
+      error(t("messages.config.keyNotFound", { key }));
       return;
     }
     target = target[keys[i]];
@@ -206,7 +222,7 @@ async function setConfigValue(keyValue: string): Promise<void> {
 
   const lastKey = keys[keys.length - 1];
   if (!(lastKey in target)) {
-    error(`キー '${key}' が見つかりません。`);
+    error(t("messages.config.keyNotFound", { key }));
     return;
   }
 
@@ -221,7 +237,13 @@ async function setConfigValue(keyValue: string): Promise<void> {
   }
 
   await writeYaml(configPath, config);
-  success(`${key} を ${value} に設定しました。`);
+
+  // 言語が変更された場合はi18nを再初期化
+  if (key === "language") {
+    await initI18n();
+  }
+
+  success(t("messages.config.setValue", { key, value }));
 }
 
 /**
@@ -246,7 +268,7 @@ export async function configAction(options: ConfigOptions): Promise<void> {
       await showConfig();
     }
   } catch (err) {
-    error(`設定操作中にエラーが発生しました: ${err}`);
+    error(t("messages.config.error", { error: stringifyError(err) }));
   }
 }
 
@@ -257,7 +279,7 @@ export async function configAction(options: ConfigOptions): Promise<void> {
  * - 値の直接設定
  */
 export const configCommand = new Command("config")
-  .description("設定を表示・変更する")
-  .option("--provider", "プロバイダーをインタラクティブに変更")
-  .option("--set <key=value>", "設定値を直接変更 (例: llm.model=gpt-4o)")
+  .description(t("cli.commands.config.description"))
+  .option("--provider", t("cli.commands.config.options.provider"))
+  .option("--set <key=value>", t("cli.commands.config.options.set"))
   .action(configAction);
