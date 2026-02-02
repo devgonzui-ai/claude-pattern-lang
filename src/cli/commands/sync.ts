@@ -1,12 +1,14 @@
 import { Command } from "commander";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { loadCatalog } from "../../core/catalog/store.js";
+import { loadCatalog, getPatternByIdentifier, AmbiguousIdentifierError } from "../../core/catalog/store.js";
+import type { Pattern } from "../../types/index.js";
 import { parseClaudeMd, writeClaudeMd } from "../../core/sync/claude-md.js";
-import { generatePatternsSection, mergePatternsSections } from "../../core/sync/merger.js";
-import { fileExists } from "../../utils/fs.js";
-import { info, success, warn, error } from "../../utils/logger.js";
+import { generatePatternFileContent, generatePatternReference } from "../../core/sync/merger.js";
+import { fileExists, writeTextFile } from "../../utils/fs.js";
+import { info, success, warn, error, stringifyError } from "../../utils/logger.js";
 import * as readline from "node:readline";
+import { t } from "../../i18n/index.js";
 
 interface SyncOptions {
   project?: string;
@@ -46,73 +48,135 @@ function getClaudeMdPath(options: SyncOptions): string {
 }
 
 /**
+ * patterns.mdのパスを取得
+ */
+function getPatternsFilePath(options: SyncOptions): string {
+  if (options.global) {
+    return join(homedir(), ".claude-patterns", "patterns.md");
+  }
+  if (options.project) {
+    return join(options.project, ".claude", "patterns.md");
+  }
+  return join(process.cwd(), ".claude", "patterns.md");
+}
+
+/**
+ * CLAUDE.mdに記載する@参照パスを取得
+ */
+function getPatternReferencePath(options: SyncOptions): string {
+  if (options.global) {
+    return "~/.claude-patterns/patterns.md";
+  }
+  return ".claude/patterns.md";
+}
+
+/**
  * syncコマンドのアクションハンドラ
  * テスト用にエクスポート
  */
-export async function syncAction(options: SyncOptions): Promise<void> {
+export async function syncAction(ids: string[], options: SyncOptions): Promise<void> {
   try {
     // パターンカタログを読み込む
     const catalog = await loadCatalog();
 
     if (catalog.patterns.length === 0) {
-      warn("パターンカタログが空です。先に `cpl add` または `cpl analyze` でパターンを追加してください。");
+      warn(t("messages.sync.emptyCatalog"));
       return;
     }
 
-    // CLAUDE.mdのパスを決定
+    // 同期対象のパターンを決定
+    let patternsToSync: Pattern[];
+    if (ids.length > 0) {
+      // 指定されたIDのパターンのみ同期
+      patternsToSync = [];
+      for (const id of ids) {
+        try {
+          const pattern = await getPatternByIdentifier(id);
+          if (!pattern) {
+            error(t("messages.sync.patternNotFound", { id }));
+            return;
+          }
+          patternsToSync.push(pattern);
+        } catch (err) {
+          if (err instanceof AmbiguousIdentifierError) {
+            error(t("messages.sync.ambiguousId", { identifier: err.identifier }));
+            for (const match of err.matches) {
+              info(t("messages.common.ambiguousIdPrefix", { shortId: match.id.substring(0, 8), name: match.name }));
+            }
+            return;
+          }
+          throw err;
+        }
+      }
+      info(t("messages.sync.syncingPatterns", { count: patternsToSync.length }));
+    } else {
+      // 全パターン同期
+      patternsToSync = catalog.patterns;
+    }
+
+    // パスを決定
     const claudeMdPath = getClaudeMdPath(options);
-    const exists = await fileExists(claudeMdPath);
+    const patternsFilePath = getPatternsFilePath(options);
+    const referencePath = getPatternReferencePath(options);
+    const claudeMdExists = await fileExists(claudeMdPath);
 
     // 既存のCLAUDE.mdを読み込む
-    let content = await parseClaudeMd(claudeMdPath);
+    const content = await parseClaudeMd(claudeMdPath);
 
-    // 新しいパターンセクションを生成
-    const newPatternSection = generatePatternsSection(catalog.patterns);
+    // patterns.mdのコンテンツを生成
+    const patternFileContent = generatePatternFileContent(patternsToSync);
 
-    // マージ
-    const mergedSection = mergePatternsSections(content.patternsSection, newPatternSection);
+    // CLAUDE.md用の@参照セクションを生成
+    const referenceSection = generatePatternReference(referencePath);
 
     // 新しい内容を構築
     const newContent = {
       beforePatterns: content.beforePatterns || "",
-      patternsSection: mergedSection,
+      patternsSection: referenceSection,
       afterPatterns: content.afterPatterns || "",
     };
 
     // diff表示
-    info("=== 変更内容 ===");
-    console.log(mergedSection);
+    info(t("messages.sync.changeHeader"));
+    info(`--- ${patternsFilePath} ---`);
+    console.log(patternFileContent);
+    info(`--- ${claudeMdPath} ---`);
+    console.log(referenceSection);
     info("================");
 
     // dry-runの場合
     if (options.dryRun) {
-      info("[dry-run] 変更は保存されませんでした。");
+      info(t("messages.sync.dryRun"));
       return;
     }
 
     // ファイルが存在しない場合は確認
-    if (!exists && !options.force) {
-      const shouldCreate = await confirm(`${claudeMdPath} が存在しません。新規作成しますか?`);
+    if (!claudeMdExists && !options.force) {
+      const shouldCreate = await confirm(t("messages.sync.createConfirm", { path: claudeMdPath }));
       if (!shouldCreate) {
-        info("同期をキャンセルしました。");
+        info(t("messages.sync.cancelled"));
         return;
       }
     }
 
     // 確認
     if (!options.force) {
-      const shouldSave = await confirm("変更を保存しますか?");
+      const shouldSave = await confirm(t("messages.sync.saveConfirm"));
       if (!shouldSave) {
-        info("同期をキャンセルしました。");
+        info(t("messages.sync.cancelled"));
         return;
       }
     }
 
-    // 書き込み
+    // patterns.mdを書き込み
+    await writeTextFile(patternsFilePath, patternFileContent);
+    success(t("messages.sync.synced", { path: patternsFilePath }));
+
+    // CLAUDE.mdに@参照を書き込み
     await writeClaudeMd(claudeMdPath, newContent);
-    success(`${claudeMdPath} にパターンを同期しました。`);
+    success(t("messages.sync.synced", { path: claudeMdPath }));
   } catch (err) {
-    error(`エラー: ${err}`);
+    error(t("messages.sync.error", { error: stringifyError(err) }));
   }
 }
 
@@ -120,9 +184,10 @@ export async function syncAction(options: SyncOptions): Promise<void> {
  * CLAUDE.md同期コマンド
  */
 export const syncCommand = new Command("sync")
-  .description("パターンカタログをCLAUDE.mdに反映")
-  .option("-p, --project <path>", "同期先プロジェクト")
-  .option("--global", "~/.claude/CLAUDE.md に同期")
-  .option("--dry-run", "変更内容のみ表示")
-  .option("--force", "確認なしで上書き")
+  .description(t("cli.commands.sync.description"))
+  .argument("[ids...]", t("cli.commands.sync.argument"))
+  .option("-p, --project <path>", t("cli.commands.sync.options.project"))
+  .option("--global", t("cli.commands.sync.options.global"))
+  .option("--dry-run", t("cli.commands.sync.options.dryRun"))
+  .option("--force", t("cli.commands.sync.options.force"))
   .action(syncAction);

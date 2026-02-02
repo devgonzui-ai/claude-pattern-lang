@@ -41,7 +41,7 @@ describe("E2E Integration: add -> show -> remove フロー", () => {
 
     const addResult = await runCli(["add", "--file", yamlPath], env);
     expect(addResult.exitCode).toBe(0);
-    expect(addResult.stdout).toContain("追加しました");
+    expect(addResult.stdout).toContain("Added pattern");
 
     // カタログに追加されたことを確認
     let catalog = await env.readCatalog();
@@ -58,7 +58,7 @@ describe("E2E Integration: add -> show -> remove フロー", () => {
     // Step 3: パターンを削除
     const removeResult = await runCli(["remove", "フローテストパターン"], env);
     expect(removeResult.exitCode).toBe(0);
-    expect(removeResult.stdout).toContain("削除しました");
+    expect(removeResult.stdout).toContain("Removed pattern");
 
     // カタログから削除されたことを確認
     catalog = await env.readCatalog();
@@ -66,7 +66,7 @@ describe("E2E Integration: add -> show -> remove フロー", () => {
 
     // Step 4: 削除後に表示するとエラー
     const showAfterRemove = await runCli(["show", "フローテストパターン"], env);
-    expect(showAfterRemove.output).toContain("見つかりません");
+    expect(showAfterRemove.output).toContain("not found");
   });
 });
 
@@ -87,12 +87,12 @@ describe("E2E Integration: init -> list フロー", () => {
     // Step 1: 初期化
     const initResult = await runCli(["init", "--default"], env);
     expect(initResult.exitCode).toBe(0);
-    expect(initResult.stdout).toContain("初期化が完了しました");
+    expect(initResult.stdout).toContain("Initialization completed");
 
     // Step 2: 空の一覧表示
     const listResult = await runCli(["list"], env);
     expect(listResult.exitCode).toBe(0);
-    expect(listResult.stdout).toContain("パターンが見つかりませんでした");
+    expect(listResult.stdout).toContain("No patterns found");
 
     // Step 3: パターンを追加
     const patternInput = createMockPatternInput({
@@ -144,14 +144,21 @@ describe("E2E Integration: IT-004 複数プロジェクトの同期", () => {
     const syncB = await runCli(["sync", "--project", projectB, "--force"], env);
     expect(syncB.exitCode).toBe(0);
 
-    // 両プロジェクトにCLAUDE.mdが作成されている
-    const contentA = await env.readFile(join(projectA, "CLAUDE.md"));
-    const contentB = await env.readFile(join(projectB, "CLAUDE.md"));
+    // 両プロジェクトにCLAUDE.mdとpatterns.mdが作成されている
+    const claudeA = await env.readFile(join(projectA, "CLAUDE.md"));
+    const claudeB = await env.readFile(join(projectB, "CLAUDE.md"));
+    const patternsA = await env.readFile(join(projectA, ".claude", "patterns.md"));
+    const patternsB = await env.readFile(join(projectB, ".claude", "patterns.md"));
 
-    expect(contentA).toContain("共通パターン1");
-    expect(contentA).toContain("共通パターン2");
-    expect(contentB).toContain("共通パターン1");
-    expect(contentB).toContain("共通パターン2");
+    // CLAUDE.mdには@参照がある
+    expect(claudeA).toContain("@.claude/patterns.md");
+    expect(claudeB).toContain("@.claude/patterns.md");
+
+    // patterns.mdにパターンが含まれている
+    expect(patternsA).toContain("共通パターン1");
+    expect(patternsA).toContain("共通パターン2");
+    expect(patternsB).toContain("共通パターン1");
+    expect(patternsB).toContain("共通パターン2");
 
     // プロジェクトAのCLAUDE.mdを変更しても、プロジェクトBには影響しない
     await writeFile(
@@ -168,8 +175,8 @@ describe("E2E Integration: IT-004 複数プロジェクトの同期", () => {
     expect(contentAAfter).toContain("Custom content for A");
 
     // プロジェクトBは新しく同期された内容
-    const contentBAfter = await env.readFile(join(projectB, "CLAUDE.md"));
-    expect(contentBAfter).toContain("共通パターン1");
+    const patternsBAfter = await env.readFile(join(projectB, ".claude", "patterns.md"));
+    expect(patternsBAfter).toContain("共通パターン1");
   });
 });
 
@@ -204,13 +211,17 @@ describe("E2E Integration: 追加 -> 同期フロー", () => {
     const syncResult = await runCli(["sync", "--force"], env);
     expect(syncResult.exitCode).toBe(0);
 
-    // Step 3: CLAUDE.mdにパターンが含まれている
+    // Step 3: CLAUDE.mdに@参照が含まれている
     const claudeMdPath = join(env.projectDir, "CLAUDE.md");
-    const content = await env.readFile(claudeMdPath);
+    const claudeMdContent = await env.readFile(claudeMdPath);
+    expect(claudeMdContent).toContain("@.claude/patterns.md");
 
-    expect(content).toContain("同期テストパターン");
-    expect(content).toContain("コード生成パターン");
-    expect(content).toContain("テンプレートを使用してコードを生成する");
+    // Step 4: patterns.mdにパターンが含まれている
+    const patternsFilePath = join(env.projectDir, ".claude", "patterns.md");
+    const patternsContent = await env.readFile(patternsFilePath);
+    expect(patternsContent).toContain("同期テストパターン");
+    expect(patternsContent).toContain("コード生成パターン");
+    expect(patternsContent).toContain("テンプレートを使用してコードを生成する");
   });
 
   it("パターン削除後にsyncで更新される", async () => {
@@ -223,18 +234,18 @@ describe("E2E Integration: 追加 -> 同期フロー", () => {
 
     // Step 2: 最初の同期
     await runCli(["sync", "--force"], env);
-    let content = await env.readFile(join(env.projectDir, "CLAUDE.md"));
-    expect(content).toContain("残るパターン");
-    expect(content).toContain("削除するパターン");
+    let patternsContent = await env.readFile(join(env.projectDir, ".claude", "patterns.md"));
+    expect(patternsContent).toContain("残るパターン");
+    expect(patternsContent).toContain("削除するパターン");
 
     // Step 3: パターンを削除
     await runCli(["remove", "削除するパターン"], env);
 
     // Step 4: 再同期
     await runCli(["sync", "--force"], env);
-    content = await env.readFile(join(env.projectDir, "CLAUDE.md"));
+    patternsContent = await env.readFile(join(env.projectDir, ".claude", "patterns.md"));
 
-    expect(content).toContain("残るパターン");
+    expect(patternsContent).toContain("残るパターン");
     // 削除されたパターンは含まれない（実装によってはマージの挙動が異なる）
     const catalog = await env.readCatalog();
     expect(catalog.patterns.length).toBe(1);
@@ -281,8 +292,10 @@ describe("E2E Integration: 日本語・特殊文字の取り扱い", () => {
 
     // 同期
     await runCli(["sync", "--force"], env);
-    const content = await env.readFile(join(env.projectDir, "CLAUDE.md"));
-    expect(content).toContain("日本語パターン【テスト】");
+    const claudeMdContent = await env.readFile(join(env.projectDir, "CLAUDE.md"));
+    expect(claudeMdContent).toContain("@.claude/patterns.md");
+    const patternsContent = await env.readFile(join(env.projectDir, ".claude", "patterns.md"));
+    expect(patternsContent).toContain("日本語パターン【テスト】");
 
     // 削除
     const removeResult = await runCli(["remove", "日本語パターン【テスト】"], env);

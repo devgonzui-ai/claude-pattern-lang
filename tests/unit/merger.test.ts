@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest";
 import {
   generatePatternsSection,
+  generatePatternFileContent,
+  generatePatternReference,
   mergePatternsSections,
 } from "../../src/core/sync/merger.js";
 import type { Pattern } from "../../src/types/index.js";
@@ -98,6 +100,55 @@ describe("generatePatternsSection", () => {
       expect(result).toContain("**Related**: 関連パターン1, 関連パターン2");
       expect(result).toContain("**Tags**: tag1, tag2");
     });
+  });
+});
+
+describe("generatePatternFileContent", () => {
+  it("空のパターン配列に対してヘッダーのみ生成する（マーカーなし）", () => {
+    const result = generatePatternFileContent([]);
+
+    expect(result).toContain("## Patterns");
+    expect(result).toContain("パターンはまだ登録されていません");
+    // マーカーは含まれない
+    expect(result).not.toContain("<!-- CPL:PATTERNS:START -->");
+    expect(result).not.toContain("<!-- CPL:PATTERNS:END -->");
+  });
+
+  it("パターンをMarkdown形式で生成する（マーカーなし）", () => {
+    const patterns: Pattern[] = [
+      {
+        id: "test-id-1",
+        name: "テストパターン",
+        type: "prompt",
+        context: "テスト用のコンテキスト",
+        solution: "テスト用のソリューション",
+        created_at: "2024-01-01T00:00:00Z",
+        updated_at: "2024-01-01T00:00:00Z",
+      },
+    ];
+
+    const result = generatePatternFileContent(patterns);
+
+    expect(result).toContain("## Patterns");
+    expect(result).toContain("### テストパターン");
+    expect(result).toContain("**Type**: prompt");
+    // マーカーは含まれない
+    expect(result).not.toContain("<!-- CPL:PATTERNS:START -->");
+    expect(result).not.toContain("<!-- CPL:PATTERNS:END -->");
+  });
+});
+
+describe("generatePatternReference", () => {
+  it("プロジェクトローカルの参照パスを生成する", () => {
+    const result = generatePatternReference(".claude/patterns.md");
+
+    expect(result).toBe("<!-- CPL:PATTERNS:START -->\n@.claude/patterns.md\n<!-- CPL:PATTERNS:END -->");
+  });
+
+  it("グローバルの参照パスを生成する", () => {
+    const result = generatePatternReference("~/.claude-patterns/patterns.md");
+
+    expect(result).toBe("<!-- CPL:PATTERNS:START -->\n@~/.claude-patterns/patterns.md\n<!-- CPL:PATTERNS:END -->");
   });
 });
 

@@ -39,16 +39,24 @@ describe("E2E: cpl sync", () => {
     });
 
     expect(result.exitCode).toBe(0);
-    expect(result.stdout).toContain("同期しました");
+    expect(result.stdout).toContain("Synced patterns");
 
     // CLAUDE.mdが作成されたことを確認
     const claudeMdPath = join(env.projectDir, "CLAUDE.md");
     await expect(access(claudeMdPath)).resolves.toBeUndefined();
 
-    // 内容を確認
-    const content = await env.readFile(claudeMdPath);
-    expect(content).toContain("テストパターン");
-    expect(content).toContain("# Patterns");
+    // CLAUDE.mdに@参照が追加されていることを確認
+    const claudeMdContent = await env.readFile(claudeMdPath);
+    expect(claudeMdContent).toContain("@.claude/patterns.md");
+
+    // patterns.mdが作成されたことを確認
+    const patternsFilePath = join(env.projectDir, ".claude", "patterns.md");
+    await expect(access(patternsFilePath)).resolves.toBeUndefined();
+
+    // patterns.mdの内容を確認
+    const patternsContent = await env.readFile(patternsFilePath);
+    expect(patternsContent).toContain("テストパターン");
+    expect(patternsContent).toContain("## Patterns");
   });
 
   it("E2E-015: --global オプション - グローバルCLAUDE.mdに同期する", async () => {
@@ -68,8 +76,17 @@ describe("E2E: cpl sync", () => {
     const globalClaudeMdPath = join(env.claudeDir, "CLAUDE.md");
     await expect(access(globalClaudeMdPath)).resolves.toBeUndefined();
 
-    const content = await env.readFile(globalClaudeMdPath);
-    expect(content).toContain("グローバルパターン");
+    // グローバルCLAUDE.mdに@参照が追加されていることを確認
+    const claudeMdContent = await env.readFile(globalClaudeMdPath);
+    expect(claudeMdContent).toContain("@~/.claude-patterns/patterns.md");
+
+    // グローバルpatterns.mdが作成されたことを確認
+    const globalPatternsPath = join(env.patternsDir, "patterns.md");
+    await expect(access(globalPatternsPath)).resolves.toBeUndefined();
+
+    // patterns.mdの内容を確認
+    const patternsContent = await env.readFile(globalPatternsPath);
+    expect(patternsContent).toContain("グローバルパターン");
   });
 
   it("E2E-016: --dry-run オプション - 変更を保存しない", async () => {
@@ -88,6 +105,10 @@ describe("E2E: cpl sync", () => {
     // CLAUDE.mdは作成されていない
     const claudeMdPath = join(env.projectDir, "CLAUDE.md");
     await expect(access(claudeMdPath)).rejects.toThrow();
+
+    // patterns.mdも作成されていない
+    const patternsFilePath = join(env.projectDir, ".claude", "patterns.md");
+    await expect(access(patternsFilePath)).rejects.toThrow();
   });
 
   it("E2E-017: --force オプション - 確認なしで上書き", async () => {
@@ -101,7 +122,7 @@ describe("E2E: cpl sync", () => {
     const result = await runCli(["sync", "--force"], env);
 
     expect(result.exitCode).toBe(0);
-    expect(result.stdout).toContain("同期しました");
+    expect(result.stdout).toContain("Synced patterns");
   });
 
   it("EDGE-002: 空のパターンカタログ - 警告メッセージを表示する", async () => {
@@ -110,7 +131,7 @@ describe("E2E: cpl sync", () => {
     const result = await runCli(["sync", "--force"], env);
 
     expect(result.exitCode).toBe(0);
-    expect(result.stdout).toContain("空です");
+    expect(result.stdout).toContain("empty");
   });
 
   it("EDGE-009: 既存CLAUDE.mdへのパターン追記 - 他のセクションが保持される", async () => {
@@ -142,27 +163,28 @@ Some important notes here.
     expect(result.exitCode).toBe(0);
 
     // 既存のセクションが保持されていることを確認
-    const content = await env.readFile(claudeMdPath);
-    expect(content).toContain("Project Guidelines");
-    expect(content).toContain("This is an existing section");
-    expect(content).toContain("Development Rules");
-    expect(content).toContain("Rule 1");
-    expect(content).toContain("追記パターン");
+    const claudeMdContent = await env.readFile(claudeMdPath);
+    expect(claudeMdContent).toContain("Project Guidelines");
+    expect(claudeMdContent).toContain("This is an existing section");
+    expect(claudeMdContent).toContain("Development Rules");
+    expect(claudeMdContent).toContain("Rule 1");
+    expect(claudeMdContent).toContain("@.claude/patterns.md");
+
+    // patterns.mdにパターンが書き込まれていることを確認
+    const patternsFilePath = join(env.projectDir, ".claude", "patterns.md");
+    const patternsContent = await env.readFile(patternsFilePath);
+    expect(patternsContent).toContain("追記パターン");
   });
 
   it("EDGE-010: CLAUDE.md内のパターンセクション更新 - 既存パターンセクションの上書き", async () => {
-    // 既存のCLAUDE.mdをパターンセクション付きで作成
+    // 既存のCLAUDE.mdをパターンセクション付きで作成（CPLマーカー付き）
     const existingContent = `# Project Guidelines
 
 Some guidelines.
 
-# Patterns
-
-## Old Pattern
-Old pattern content.
-
-## Another Old Pattern
-Another old content.
+<!-- CPL:PATTERNS:START -->
+@.claude/patterns.md
+<!-- CPL:PATTERNS:END -->
 
 # Other Section
 
@@ -183,12 +205,17 @@ Other content.
 
     expect(result.exitCode).toBe(0);
 
-    const content = await env.readFile(claudeMdPath);
-    // 新しいパターンが含まれている
-    expect(content).toContain("新しいパターン");
+    const claudeMdContent = await env.readFile(claudeMdPath);
+    // @参照が含まれている
+    expect(claudeMdContent).toContain("@.claude/patterns.md");
     // 他のセクションは保持されている
-    expect(content).toContain("Project Guidelines");
-    expect(content).toContain("Other Section");
+    expect(claudeMdContent).toContain("Project Guidelines");
+    expect(claudeMdContent).toContain("Other Section");
+
+    // patterns.mdに新しいパターンが含まれている
+    const patternsFilePath = join(env.projectDir, ".claude", "patterns.md");
+    const patternsContent = await env.readFile(patternsFilePath);
+    expect(patternsContent).toContain("新しいパターン");
   });
 
   it("--project オプション - 特定プロジェクトに同期する", async () => {
@@ -210,8 +237,17 @@ Other content.
     const targetClaudeMdPath = join(targetProject, "CLAUDE.md");
     await expect(access(targetClaudeMdPath)).resolves.toBeUndefined();
 
-    const content = await env.readFile(targetClaudeMdPath);
-    expect(content).toContain("プロジェクトパターン");
+    // CLAUDE.mdに@参照が追加されていることを確認
+    const claudeMdContent = await env.readFile(targetClaudeMdPath);
+    expect(claudeMdContent).toContain("@.claude/patterns.md");
+
+    // patterns.mdが作成されたことを確認
+    const patternsFilePath = join(targetProject, ".claude", "patterns.md");
+    await expect(access(patternsFilePath)).resolves.toBeUndefined();
+
+    // patterns.mdの内容を確認
+    const patternsContent = await env.readFile(patternsFilePath);
+    expect(patternsContent).toContain("プロジェクトパターン");
   });
 
   it("複数パターンを同期する", async () => {
@@ -226,10 +262,16 @@ Other content.
 
     expect(result.exitCode).toBe(0);
 
+    // CLAUDE.mdに@参照が追加されていることを確認
     const claudeMdPath = join(env.projectDir, "CLAUDE.md");
-    const content = await env.readFile(claudeMdPath);
-    expect(content).toContain("パターン1");
-    expect(content).toContain("パターン2");
-    expect(content).toContain("パターン3");
+    const claudeMdContent = await env.readFile(claudeMdPath);
+    expect(claudeMdContent).toContain("@.claude/patterns.md");
+
+    // patterns.mdに全パターンが含まれていることを確認
+    const patternsFilePath = join(env.projectDir, ".claude", "patterns.md");
+    const patternsContent = await env.readFile(patternsFilePath);
+    expect(patternsContent).toContain("パターン1");
+    expect(patternsContent).toContain("パターン2");
+    expect(patternsContent).toContain("パターン3");
   });
 });

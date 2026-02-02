@@ -81,6 +81,8 @@ cpl analyze --since 2024-01-01
 cpl analyze --project /path/to/project
 ```
 
+> **Note**: The `analyze` command calls the LLM API for each session to extract patterns. Token consumption increases with the number of sessions analyzed. You can monitor usage with `cpl metrics`.
+
 ### List Patterns
 
 Browse your pattern catalog:
@@ -124,6 +126,23 @@ cpl sync --dry-run
 # Sync to global CLAUDE.md
 cpl sync --global
 ```
+
+#### How Sync Works
+
+The `sync` command creates two files:
+
+1. **patterns.md** - Contains the actual pattern content
+   - Project local: `{project}/.claude/patterns.md`
+   - Global (`--global`): `~/.claude-patterns/patterns.md`
+
+2. **CLAUDE.md** - Contains an `@` reference to patterns.md
+   ```markdown
+   <!-- CPL:PATTERNS:START -->
+   @.claude/patterns.md
+   <!-- CPL:PATTERNS:END -->
+   ```
+
+This approach keeps CLAUDE.md clean and allows patterns to be managed independently. Claude Code's `@` import feature automatically loads the pattern content.
 
 ### Manage Patterns
 
@@ -263,6 +282,7 @@ After installation, the following structure is created:
 ~/.claude-patterns/
 ├── config.yaml           # Global configuration
 ├── patterns.yaml         # Pattern catalog
+├── patterns.md           # Synced patterns (global, for --global sync)
 ├── prompts/              # Custom prompt templates
 │   └── extract.txt
 └── cache/
@@ -270,13 +290,14 @@ After installation, the following structure is created:
     └── queue.yaml        # Analysis queue
 ```
 
-Project-specific structure (optional):
+Project-specific structure (after running `cpl sync`):
 
 ```
 {project}/
 ├── .claude/
-│   └── patterns.yaml     # Project-specific patterns
-└── CLAUDE.md             # Patterns section added here
+│   ├── patterns.yaml     # Project-specific patterns (optional)
+│   └── patterns.md       # Synced patterns (referenced by CLAUDE.md)
+└── CLAUDE.md             # Contains @.claude/patterns.md reference
 ```
 
 ## Development

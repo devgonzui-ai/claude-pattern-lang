@@ -81,6 +81,8 @@ cpl analyze --since 2024-01-01
 cpl analyze --project /path/to/project
 ```
 
+> **Note**: `analyze`コマンドはセッションごとにLLM APIを呼び出してパターンを抽出します。解析するセッション数が多いほどトークン消費量が増加します。使用量は`cpl metrics`で確認できます。
+
 ### パターン一覧
 
 パターンカタログを閲覧します：
@@ -124,6 +126,23 @@ cpl sync --dry-run
 # グローバルCLAUDE.mdに同期
 cpl sync --global
 ```
+
+#### sync の仕組み
+
+`sync` コマンドは2つのファイルを生成します：
+
+1. **patterns.md** - 実際のパターン内容を含む
+   - プロジェクトローカル: `{project}/.claude/patterns.md`
+   - グローバル (`--global`): `~/.claude-patterns/patterns.md`
+
+2. **CLAUDE.md** - patterns.mdへの `@` 参照を含む
+   ```markdown
+   <!-- CPL:PATTERNS:START -->
+   @.claude/patterns.md
+   <!-- CPL:PATTERNS:END -->
+   ```
+
+このアプローチにより、CLAUDE.mdがスッキリし、パターンを独立して管理できます。Claude Codeの `@` インポート機能がパターン内容を自動的に読み込みます。
 
 ### パターン管理
 
@@ -263,6 +282,7 @@ sync:
 ~/.claude-patterns/
 ├── config.yaml           # グローバル設定
 ├── patterns.yaml         # パターンカタログ
+├── patterns.md           # 同期されたパターン（グローバル、--global sync用）
 ├── prompts/              # カスタムプロンプトテンプレート
 │   └── extract.txt
 └── cache/
@@ -270,13 +290,14 @@ sync:
     └── queue.yaml        # 解析キュー
 ```
 
-プロジェクト固有の構成（オプション）：
+プロジェクト固有の構成（`cpl sync` 実行後）：
 
 ```
 {project}/
 ├── .claude/
-│   └── patterns.yaml     # プロジェクト固有パターン
-└── CLAUDE.md             # パターンセクションが追加される
+│   ├── patterns.yaml     # プロジェクト固有パターン（オプション）
+│   └── patterns.md       # 同期されたパターン（CLAUDE.mdから参照）
+└── CLAUDE.md             # @.claude/patterns.md への参照を含む
 ```
 
 ## 開発
