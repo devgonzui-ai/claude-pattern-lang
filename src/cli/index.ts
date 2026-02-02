@@ -7,3 +7,5 @@ export { addCommand } from "./commands/add.js";
 export { removeCommand } from "./commands/remove.js";
 export { configCommand } from "./commands/config.js";
 export { metricsCommand } from "./commands/metrics.js";
+export { createCommand } from "./commands/create.js";
+export { sessionCommand } from "./commands/session.js";

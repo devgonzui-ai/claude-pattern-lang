@@ -1,0 +1,160 @@
+# コーディングパターン集
+# 汎用的に使えるコーディングのベストプラクティス
+
+patterns:
+  - id: ja-coding-001
+    name: 変更前確認パターン
+    type: prompt
+    context: 既存コードを修正・削除・リファクタリングする場合
+    solution: 変更前に必ずReadツールでファイル内容を確認させる
+    example_prompt: "ファイルを読んでから修正して" or "Readで確認してから変更して"
+    tags: [coding, file-operation, safe-edit]
+    notes: AIが変更前に現在の状態を把握できるよう、必ず先に読み込ませる
+
+  - id: ja-coding-002
+    name: 非同期エラーハンドリング
+    type: code
+    context: 非同期関数でエラーハンドリングが必要な場合
+    solution: try-catch-finallyパターンで適切にエラーを処理する
+    example: |
+      export async function apiCall(): Promise<Result> {
+        try {
+          const response = await fetch(url);
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          return await response.json();
+        } catch (error) {
+          console.error('API call failed:', error);
+          throw error; // 再スローまたはフォールバック値を返す
+        } finally {
+          // クリーンアップ処理があればここに
+        }
+      }
+    tags: [async, typescript, error-handling, api]
+
+  - id: ja-coding-003
+    name: 早期リターンパターン
+    type: code
+    context: 複数の条件分岐がある関数で可読性を高めたい場合
+    solution: エラーや早期終了条件を先にチェックしてreturnする
+    example: |
+      function processUser(user: User | null): Result {
+        if (!user) {
+          throw new Error('User is required');
+        }
+        if (!user.isActive) {
+          return { success: false, reason: 'inactive' };
+        }
+        // メイン処理
+        return doSomething(user);
+      }
+    tags: [readability, defensive-coding, guard-clause]
+
+  - id: ja-coding-004
+    name: 型ガードプレディケート
+    type: code
+    context: 型の絞り込みを行いたい場合
+    solution: 型ガード関数（is プレディケート）を使用
+    example: |
+      function isString(value: unknown): value is string {
+        return typeof value === 'string';
+      }
+
+      function process(value: unknown) {
+        if (isString(value)) {
+          // ここではvalueはstring型として扱える
+          return value.toUpperCase();
+        }
+      }
+    tags: [typescript, types, type-narrowing]
+
+  - id: ja-coding-005
+    name: イミュータブル更新パターン
+    type: code
+    context: オブジェクトや配列をイミュータブルに更新する場合
+    solution: スプレッド演算子で新しいオブジェクトを作成
+    example: |
+      // オブジェクトの更新
+      const updated = { ...original, field: newValue };
+
+      // ネストされた更新
+      const updatedNested = {
+        ...original,
+        nested: { ...original.nested, field: newValue }
+      };
+
+      // 配列の更新
+      const updatedArray = [...originalArray, newItem];
+      const updatedItem = array.map((item, i) =>
+        i === index ? newItem : item
+      );
+    tags: [immutability, functional, javascript]
+
+  - id: ja-coding-006
+    name: DTOバリデーションパターン
+    type: code
+    context: APIや外部入力のバリデーションを行う場合
+    solution: 入力→バリデーション→変換の順で処理する
+    example: |
+      interface CreateUserDto {
+        name: string;
+        email: string;
+      }
+
+      function validateCreateUser(input: unknown): CreateUserDto {
+        if (!input || typeof input !== 'object') {
+          throw new Error('Invalid input');
+        }
+        const { name, email } = input as Record<string, unknown>;
+        if (!name || typeof name !== 'string') {
+          throw new Error('name is required and must be a string');
+        }
+        if (!email || typeof email !== 'string' || !email.includes('@')) {
+          throw new Error('email is required and must be valid');
+        }
+        return { name, email };
+      }
+    tags: [validation, typescript, dto, api]
+
+  - id: ja-coding-007
+    name: 依存性注入パターン
+    type: code
+    context: クラスの依存関係をテスタブルにしたい場合
+    solution: 依存オブジェクトをコンストラクタで注入する
+    example: |
+      class UserService {
+        constructor(
+          private db: Database,
+          private emailService: EmailService
+        ) {}
+
+        async notifyUser(userId: string) {
+          const user = await this.db.findUser(userId);
+          await this.emailService.send(user.email, 'Hello');
+        }
+      }
+
+      // テストではモックを注入できる
+      // const service = new UserService(mockDb, mockEmail);
+    tags: [dependency-injection, testing, oop, architecture]
+
+  - id: ja-coding-008
+    name: Enumマッピングパターン
+    type: code
+    context: 列挙値と表示値などのマッピングが必要な場合
+    solution: オブジェクトでマッピングを定義
+    example: |
+      enum Status {
+        Active = 'active',
+        Inactive = 'inactive',
+        Pending = 'pending'
+      }
+
+      const STATUS_LABELS: Record<Status, string> = {
+        [Status.Active]: '有効',
+        [Status.Inactive]: '無効',
+        [Status.Pending]: '保留中'
+      };
+
+      // 使用時
+      const label = STATUS_LABELS[user.status];
+    tags: [mapping, enum, typescript]

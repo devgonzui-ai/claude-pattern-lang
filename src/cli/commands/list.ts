@@ -3,6 +3,7 @@ import { loadCatalog } from "../../core/catalog/store.js";
 import { filterByType, searchByKeyword } from "../../core/catalog/search.js";
 import { table, info } from "../../utils/logger.js";
 import type { Pattern, PatternType } from "../../types/index.js";
+import { t } from "../../i18n/index.js";
 
 interface ListOptions {
   type?: PatternType;
@@ -14,10 +15,14 @@ interface ListOptions {
  * パターンを表示用のレコードに変換
  */
 function formatPatternForTable(pattern: Pattern): Record<string, string> {
+  // IDは短く表示（最初の8文字）
+  const shortId = pattern.id.slice(0, 8);
+
   return {
+    ID: shortId,
     Name: pattern.name,
     Type: pattern.type,
-    Context: pattern.context.substring(0, 50) + (pattern.context.length > 50 ? "..." : ""),
+    Context: pattern.context.substring(0, 40) + (pattern.context.length > 40 ? "..." : ""),
   };
 }
 
@@ -25,10 +30,10 @@ function formatPatternForTable(pattern: Pattern): Record<string, string> {
  * パターン一覧表示コマンド
  */
 export const listCommand = new Command("list")
-  .description("保存済みパターンの一覧を表示")
-  .option("-t, --type <type>", "prompt | solution | code でフィルタ")
-  .option("-s, --search <keyword>", "キーワード検索")
-  .option("--json", "JSON形式で出力")
+  .description(t("cli.commands.list.description"))
+  .option("-t, --type <type>", t("cli.commands.list.options.type"))
+  .option("-s, --search <keyword>", t("cli.commands.list.options.search"))
+  .option("--json", t("cli.commands.list.options.json"))
   .action(async (options: ListOptions) => {
     const catalog = await loadCatalog();
     let patterns = catalog.patterns;
@@ -45,7 +50,7 @@ export const listCommand = new Command("list")
 
     // 空の場合
     if (patterns.length === 0) {
-      info("パターンが見つかりませんでした。");
+      info(t("messages.list.noPatterns"));
       return;
     }
 

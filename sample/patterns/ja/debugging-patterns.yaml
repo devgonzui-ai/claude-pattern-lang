@@ -1,0 +1,109 @@
+# デバッグ・トラブルシューティングパターン集
+# 問題解決のためのアプローチと手法
+
+patterns:
+  - id: ja-debug-001
+    name: 体系的デバッグ手順
+    type: solution
+    context: バグやエラーが発生した場合の体系的な対処法
+    problem: エラー原因が不明でどこから調査すればよいかわからない
+    solution: |
+      1. エラーメッセージを確認
+      2. スタックトレースから問題の箇所を特定
+      3. 関連コードをReadで確認
+      4. 原因を推測
+      5. 最小限の変更で修正
+      6. 動作確認
+    example: |
+      User: "ログイン処理でエラーが出る"
+      AI: "エラーログを確認させて。関連ファイルは src/auth/login.ts ですね？
+          Readで内容を確認して、問題を特定しますね"
+    tags: [debugging, workflow, systematic, troubleshooting]
+
+  - id: ja-debug-002
+    name: Module Not Found (ESM)
+    type: solution
+    context: "Cannot find module" エラーが発生した場合
+    problem: ESMプロジェクトで拡張子が不足している、またはexportのミス
+    solution: |
+      1. エラーメッセージで該当モジュールを確認
+      2. インポート元のパスを確認
+      3. package.jsonの "type" を確認（"module"ならESM）
+      4. ESMの場合、.js拡張子が必要（TypeScriptからコンパイル後）
+      5. exportされているか確認
+    example: |
+      // ESMの場合
+      import { helper } from './utils/helper.js';  // .jsが必要
+
+      // または export されているか確認
+      // export function helper() { ... }
+    tags: [debugging, esm, module-resolution, typescript]
+
+  - id: ja-debug-003
+    name: async/await忘れ
+    type: solution
+    context: Promiseが正しく待機されず、undefinedやPromiseオブジェクトが返ってくる場合
+    problem: async関数内でawaitを忘れている
+    solution: Promiseを返す関数呼び出しにawaitを付ける
+    example: |
+      // Bad: Promiseが返る前に処理が進む
+      const result = fetch(url);
+
+      // Good: 結果を待機
+      const result = await fetch(url);
+    tags: [async, debugging, promise, await]
+
+  - id: ja-debug-004
+    name: 型アサーションチェック
+    type: solution
+    context: TypeScriptの型エラーで困っている場合
+    problem: 型推論が正しく働かない、または型定義が不足している
+    solution: |
+      1. 実際の値の型を確認（typeof演算子やconsole.log）
+      2. インターフェース定義を確認
+      3. 型ガード関数を使用して絞り込み
+      4. 必要であれば型アサーションを慎重に使用
+      5. unknown型から適切な型への変換
+    example: |
+      function isUser(value: unknown): value is User {
+        return typeof value === 'object' &&
+               value !== null &&
+               'id' in value &&
+               'name' in value;
+      }
+    tags: [typescript, types, debugging, type-guard]
+
+  - id: ja-debug-005
+    name: null参照チェック
+    type: solution
+    context: "Cannot read property 'x' of null" エラーが出る場合
+    problem: オブジェクトがnull/undefinedの可能性があるのにアクセスしている
+    solution: オプショナルチェーン（?.）またはnullチェックを追加
+    example: |
+      // Bad
+      const name = user.profile.name;
+
+      // Good with optional chaining
+      const name = user?.profile?.name;
+
+      // Good with explicit check
+      if (user?.profile) {
+        const name = user.profile.name;
+      }
+    tags: [debugging, null-safety, typescript, javascript]
+
+  - id: ja-debug-006
+    name: 非同期競合
+    type: solution
+    context: 非同期処理の順序が期待通りにならない場合
+    problem: Promise.allや並列実行で順序が保証されていない
+    solution: for-ofループとawaitを組み合わせて順次実行、またはPromise.allで結果を配列として受け取る
+    example: |
+      // 順次実行（順序が重要）
+      for (const item of items) {
+        await processItem(item);
+      }
+
+      // 並列実行（順序は問わない）
+      const results = await Promise.all(items.map(item => processItem(item)));
+    tags: [async, debugging, promise, race-condition]

@@ -100,3 +100,23 @@ export function table(data: Record<string, string>[]): void {
 
   console.log(tableInstance.toString());
 }
+
+/**
+ * エラーを安全に文字列化する
+ */
+export function stringifyError(err: unknown): string {
+  if (err instanceof Error) {
+    return err.message;
+  }
+  if (typeof err === "string") {
+    return err;
+  }
+  if (typeof err === "object" && err !== null) {
+    try {
+      return JSON.stringify(err);
+    } catch {
+      return String(err);
+    }
+  }
+  return String(err);
+}

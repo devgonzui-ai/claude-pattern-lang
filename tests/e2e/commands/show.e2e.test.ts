@@ -45,7 +45,7 @@ describe("E2E: cpl show", () => {
     const result = await runCli(["show", "存在しないパターン"], env);
 
     expect(result.exitCode).toBe(0); // エラーでも終了コードは0
-    expect(result.output).toContain("見つかりません");
+    expect(result.output).toContain("not found");
   });
 
   it("複数パターンがある場合も正しいパターンを表示する", async () => {

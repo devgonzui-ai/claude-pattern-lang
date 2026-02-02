@@ -4,7 +4,10 @@ import {
   saveCatalog,
   addPattern,
   removePattern,
+  removePatternByIdentifier,
   getPattern,
+  getPatternByIdentifier,
+  AmbiguousIdentifierError,
 } from "../../src/core/catalog/store.js";
 import type { PatternCatalog, PatternInput } from "../../src/types/index.js";
 
@@ -13,6 +16,16 @@ vi.mock("../../src/utils/fs.js", () => ({
   getCatalogPath: vi.fn(() => "/mock/.claude-patterns/patterns.yaml"),
   readYaml: vi.fn(),
   writeYaml: vi.fn(),
+}));
+
+// i18nのモック
+vi.mock("../../src/i18n/index.js", () => ({
+  t: vi.fn((key: string, params?: Record<string, unknown>) => {
+    if (key === "errors.ambiguousId") {
+      return `ID "${params?.identifier}" matches multiple patterns`;
+    }
+    return key;
+  }),
 }));
 
 // crypto.randomUUIDのモック
@@ -267,6 +280,169 @@ describe("store", () => {
       const result = await getPattern("パターン2");
 
       expect(result?.name).toBe("パターン2");
+    });
+  });
+
+  describe("getPatternByIdentifier", () => {
+    it("完全一致IDでパターンを取得する", async () => {
+      const mockPattern = {
+        id: "abc12345-6789-0000-0000-000000000000",
+        name: "テストパターン",
+        type: "prompt" as const,
+        context: "コンテキスト",
+        solution: "ソリューション",
+        created_at: "2026-01-01T00:00:00.000Z",
+        updated_at: "2026-01-01T00:00:00.000Z",
+      };
+      mockedReadYaml.mockResolvedValue({ patterns: [mockPattern] });
+
+      const result = await getPatternByIdentifier("abc12345-6789-0000-0000-000000000000");
+
+      expect(result).toEqual(mockPattern);
+    });
+
+    it("プレフィックス（短縮ID）でパターンを取得する", async () => {
+      const mockPattern = {
+        id: "abc12345-6789-0000-0000-000000000000",
+        name: "テストパターン",
+        type: "prompt" as const,
+        context: "コンテキスト",
+        solution: "ソリューション",
+        created_at: "2026-01-01T00:00:00.000Z",
+        updated_at: "2026-01-01T00:00:00.000Z",
+      };
+      mockedReadYaml.mockResolvedValue({ patterns: [mockPattern] });
+
+      const result = await getPatternByIdentifier("abc1");
+
+      expect(result).toEqual(mockPattern);
+    });
+
+    it("複数マッチの場合はAmbiguousIdentifierErrorをスローする", async () => {
+      const patterns = [
+        {
+          id: "abc12345-0000-0000-0000-000000000000",
+          name: "パターン1",
+          type: "prompt" as const,
+          context: "コンテキスト1",
+          solution: "ソリューション1",
+          created_at: "2026-01-01T00:00:00.000Z",
+          updated_at: "2026-01-01T00:00:00.000Z",
+        },
+        {
+          id: "abc12345-1111-1111-1111-111111111111",
+          name: "パターン2",
+          type: "solution" as const,
+          context: "コンテキスト2",
+          solution: "ソリューション2",
+          created_at: "2026-01-01T00:00:00.000Z",
+          updated_at: "2026-01-01T00:00:00.000Z",
+        },
+      ];
+      mockedReadYaml.mockResolvedValue({ patterns });
+
+      await expect(getPatternByIdentifier("abc1")).rejects.toThrow(AmbiguousIdentifierError);
+    });
+
+    it("AmbiguousIdentifierErrorにマッチしたパターンが含まれる", async () => {
+      const patterns = [
+        {
+          id: "abc12345-0000-0000-0000-000000000000",
+          name: "パターン1",
+          type: "prompt" as const,
+          context: "コンテキスト1",
+          solution: "ソリューション1",
+          created_at: "2026-01-01T00:00:00.000Z",
+          updated_at: "2026-01-01T00:00:00.000Z",
+        },
+        {
+          id: "abc12345-1111-1111-1111-111111111111",
+          name: "パターン2",
+          type: "solution" as const,
+          context: "コンテキスト2",
+          solution: "ソリューション2",
+          created_at: "2026-01-01T00:00:00.000Z",
+          updated_at: "2026-01-01T00:00:00.000Z",
+        },
+      ];
+      mockedReadYaml.mockResolvedValue({ patterns });
+
+      try {
+        await getPatternByIdentifier("abc1");
+        expect.fail("Expected AmbiguousIdentifierError");
+      } catch (err) {
+        expect(err).toBeInstanceOf(AmbiguousIdentifierError);
+        const error = err as AmbiguousIdentifierError;
+        expect(error.identifier).toBe("abc1");
+        expect(error.matches).toHaveLength(2);
+      }
+    });
+
+    it("名前でパターンを取得する（IDがマッチしない場合）", async () => {
+      const mockPattern = {
+        id: "abc12345-6789-0000-0000-000000000000",
+        name: "テストパターン",
+        type: "prompt" as const,
+        context: "コンテキスト",
+        solution: "ソリューション",
+        created_at: "2026-01-01T00:00:00.000Z",
+        updated_at: "2026-01-01T00:00:00.000Z",
+      };
+      mockedReadYaml.mockResolvedValue({ patterns: [mockPattern] });
+
+      const result = await getPatternByIdentifier("テストパターン");
+
+      expect(result).toEqual(mockPattern);
+    });
+  });
+
+  describe("removePatternByIdentifier", () => {
+    it("プレフィックス（短縮ID）でパターンを削除する", async () => {
+      const mockPattern = {
+        id: "abc12345-6789-0000-0000-000000000000",
+        name: "削除対象",
+        type: "prompt" as const,
+        context: "コンテキスト",
+        solution: "ソリューション",
+        created_at: "2026-01-01T00:00:00.000Z",
+        updated_at: "2026-01-01T00:00:00.000Z",
+      };
+      mockedReadYaml.mockResolvedValue({ patterns: [mockPattern] });
+      mockedWriteYaml.mockResolvedValue(undefined);
+
+      const result = await removePatternByIdentifier("abc1");
+
+      expect(result).toBe(true);
+      expect(mockedWriteYaml).toHaveBeenCalledWith(
+        "/mock/.claude-patterns/patterns.yaml",
+        { patterns: [] }
+      );
+    });
+
+    it("複数マッチの場合はAmbiguousIdentifierErrorをスローする", async () => {
+      const patterns = [
+        {
+          id: "abc12345-0000-0000-0000-000000000000",
+          name: "パターン1",
+          type: "prompt" as const,
+          context: "コンテキスト1",
+          solution: "ソリューション1",
+          created_at: "2026-01-01T00:00:00.000Z",
+          updated_at: "2026-01-01T00:00:00.000Z",
+        },
+        {
+          id: "abc12345-1111-1111-1111-111111111111",
+          name: "パターン2",
+          type: "solution" as const,
+          context: "コンテキスト2",
+          solution: "ソリューション2",
+          created_at: "2026-01-01T00:00:00.000Z",
+          updated_at: "2026-01-01T00:00:00.000Z",
+        },
+      ];
+      mockedReadYaml.mockResolvedValue({ patterns });
+
+      await expect(removePatternByIdentifier("abc1")).rejects.toThrow(AmbiguousIdentifierError);
     });
   });
 

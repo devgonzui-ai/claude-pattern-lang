@@ -24,7 +24,7 @@ describe("E2E: cpl init", () => {
 
     // 成功メッセージを確認
     expect(result.exitCode).toBe(0);
-    expect(result.stdout).toContain("初期化が完了しました");
+    expect(result.stdout).toContain("Initialization completed");
 
     // ディレクトリが作成されたことを確認
     await expect(access(env.patternsDir)).resolves.toBeUndefined();
@@ -57,13 +57,13 @@ describe("E2E: cpl init", () => {
 
     // 警告メッセージを確認
     expect(result.exitCode).toBe(0);
-    expect(result.stdout).toContain("既に存在");
+    expect(result.stdout).toContain("already exists");
   });
 
-  it("次のステップのガイダンスを表示する", async () => {
+  it("Next stepsのガイダンスを表示する", async () => {
     const result = await runCli(["init", "--default"], env);
 
-    expect(result.stdout).toContain("次のステップ");
+    expect(result.stdout).toContain("Next steps");
     expect(result.stdout).toContain("ANTHROPIC_API_KEY");
     expect(result.stdout).toContain("cpl analyze");
     expect(result.stdout).toContain("cpl sync");

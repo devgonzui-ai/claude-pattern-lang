@@ -1,0 +1,36 @@
+# このセッションから抽出されるべきパターン（期待値）
+
+patterns:
+  - name: read-before-edit
+    type: prompt
+    context: コードを修正する前にファイルを読んで現状を確認する場合
+    solution: まずは「まずはReadで読んでからEditで編集する」のように指示することで、AIが変更前にファイル内容を確認するよう促す
+    example_prompt: "ファイルを読んでから修正して" or "Readで確認してから変更して"
+    tags: [code-edit, file-operation]
+
+  - name: module-not-found-debug
+    type: solution
+    context: "Cannot find module" エラーが発生した場合
+    problem: ESMプロジェクトで拡張子が不足していることがある
+    solution: 1. エラーログを確認 2. インポートパスをチェック 3. package.jsonのtype設定を確認 4. 必要に応じて.js拡張子を追加
+    example: |
+      エラー: Cannot find module './helper'
+      -> import from './utils/helper.js' に修正
+    tags: [debug, esm, module-resolution]
+
+  - name: async-api-template
+    type: code
+    context: TypeScriptで非同期API呼び出し関数を作成する場合
+    solution: async/await + try-catch + 型付きPromiseのテンプレートを使用する
+    example: |
+      export async function fetchApi(path: string): Promise<Type> {
+        try {
+          const response = await fetch(path);
+          if (!response.ok) throw new Error(...);
+          return await response.json();
+        } catch (error) {
+          console.error(...);
+          throw error;
+        }
+      }
+    tags: [async, typescript, api, error-handling]

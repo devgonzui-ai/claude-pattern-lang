@@ -5,6 +5,7 @@ import { readYaml } from "../../utils/fs.js";
 import { success, error, info } from "../../utils/logger.js";
 import type { PatternInput } from "../../types/index.js";
 import * as readline from "node:readline";
+import { t } from "../../i18n/index.js";
 
 interface AddOptions {
   file?: string;
@@ -19,24 +20,25 @@ export async function addFromFileAction(filePath: string): Promise<void> {
   const data = await readYaml<PatternInput>(filePath);
 
   if (!data) {
-    error(`ファイル "${filePath}" を読み込めませんでした。`);
+    error(t("messages.add.fileNotFound", { path: filePath }));
     return;
   }
 
   const validation = validatePatternInput(data);
   if (!validation.valid) {
-    error(`バリデーションエラー:\n  - ${validation.errors.join("\n  - ")}`);
+    error(t("messages.add.validationError", { errors: validation.errors.join("\n  - ") }));
     return;
   }
 
   await addPattern(data);
-  success(`パターン "${data.name}" を追加しました。`);
+  success(t("messages.add.added", { name: data.name }));
 }
 
 /**
  * 対話モードでパターンを追加
+ * createコマンドからも利用されるためエクスポート
  */
-async function addInteractiveAction(): Promise<void> {
+export async function addInteractiveAction(): Promise<void> {
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
@@ -46,12 +48,12 @@ async function addInteractiveAction(): Promise<void> {
     new Promise((resolve) => rl.question(prompt, resolve));
 
   try {
-    info("パターンを対話形式で追加します。");
+    info(t("messages.add.interactive"));
 
-    const name = await question("パターン名: ");
-    const typeStr = await question("タイプ (prompt/solution/code): ");
-    const context = await question("コンテキスト: ");
-    const solution = await question("ソリューション: ");
+    const name = await question(t("messages.add.promptName"));
+    const typeStr = await question(t("messages.add.promptType"));
+    const context = await question(t("messages.add.promptContext"));
+    const solution = await question(t("messages.add.promptSolution"));
 
     const input: PatternInput = {
       name,
@@ -62,12 +64,12 @@ async function addInteractiveAction(): Promise<void> {
 
     const validation = validatePatternInput(input);
     if (!validation.valid) {
-      error(`バリデーションエラー:\n  - ${validation.errors.join("\n  - ")}`);
+      error(t("messages.add.validationError", { errors: validation.errors.join("\n  - ") }));
       return;
     }
 
     await addPattern(input);
-    success(`パターン "${name}" を追加しました。`);
+    success(t("messages.add.added", { name }));
   } finally {
     rl.close();
   }
@@ -77,9 +79,9 @@ async function addInteractiveAction(): Promise<void> {
  * パターン手動追加コマンド
  */
 export const addCommand = new Command("add")
-  .description("パターンを手動で追加")
-  .option("-f, --file <yaml>", "YAMLファイルから追加")
-  .option("-i, --interactive", "対話モード（デフォルト）")
+  .description(t("cli.commands.add.description"))
+  .option("-f, --file <yaml>", t("cli.commands.add.options.file"))
+  .option("-i, --interactive", t("cli.commands.add.options.interactive"))
   .action(async (options: AddOptions) => {
     if (options.file) {
       await addFromFileAction(options.file);

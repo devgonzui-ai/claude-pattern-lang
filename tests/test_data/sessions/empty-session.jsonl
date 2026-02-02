@@ -1,0 +1,4 @@
+{"type":"user","message":{"role":"user","content":"こんにちは"},"timestamp":"2025-01-29T12:00:00.000Z"}
+{"type":"assistant","message":{"role":"assistant","content":"こんにちは！何かお手伝いできることはある？"},"timestamp":"2025-01-29T12:00:01.000Z"}
+{"type":"user","message":{"role":"user","content":"今日はいい天気だね"},"timestamp":"2025-01-29T12:00:02.000Z"}
+{"type":"assistant","message":{"role":"assistant","content":"そうだね！良い一日になりますように☆"},"timestamp":"2025-01-29T12:00:03.000Z"}

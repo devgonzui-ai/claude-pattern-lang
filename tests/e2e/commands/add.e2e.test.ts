@@ -39,7 +39,7 @@ describe("E2E: cpl add", () => {
     const result = await runCli(["add", "--file", yamlPath], env);
 
     expect(result.exitCode).toBe(0);
-    expect(result.stdout).toContain("追加しました");
+    expect(result.stdout).toContain("Added pattern");
     expect(result.stdout).toContain("新規パターン");
 
     // カタログに追加されたことを確認
@@ -71,7 +71,7 @@ context: [これは不正なYAML
     expect(catalog.patterns.length).toBe(0);
   });
 
-  it("バリデーションエラー - 必須フィールドが欠落している場合", async () => {
+  it("Validation error - 必須フィールドが欠落している場合", async () => {
     const incompletePattern = {
       name: "不完全なパターン",
       // type, context, solution が欠落
@@ -84,7 +84,7 @@ context: [これは不正なYAML
 
     const result = await runCli(["add", "--file", yamlPath], env);
 
-    expect(result.output).toContain("バリデーションエラー");
+    expect(result.output).toContain("Validation error");
 
     // カタログは変更されていない
     const catalog = await env.readCatalog();
@@ -106,7 +106,7 @@ context: [これは不正なYAML
 
     const result = await runCli(["add", "--file", yamlPath], env);
 
-    expect(result.output).toContain("バリデーションエラー");
+    expect(result.output).toContain("Validation error");
   });
 
   it("EDGE-007: パターン名重複 - 同名パターンが追加される（現在の実装では許可）", async () => {
@@ -130,7 +130,7 @@ context: [これは不正なYAML
 
     // 現在の実装では重複が許可される
     expect(result.exitCode).toBe(0);
-    expect(result.stdout).toContain("追加しました");
+    expect(result.stdout).toContain("Added pattern");
 
     // カタログに2つのパターンが存在
     const catalog = await env.readCatalog();
@@ -143,7 +143,7 @@ context: [これは不正なYAML
   it("存在しないファイル - エラーメッセージを表示する", async () => {
     const result = await runCli(["add", "--file", "/nonexistent/path.yaml"], env);
 
-    expect(result.output).toContain("読み込めません");
+    expect(result.output).toContain("Could not read");
   });
 
   it("全タイプのパターンを追加できる", async () => {

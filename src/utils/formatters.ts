@@ -1,5 +1,6 @@
 import type { CommandMetrics, LLMMetrics, MetricsStatistics, OutputLevel } from "../types/index.js";
 import { table } from "table";
+import { t } from "../i18n/index.js";
 
 /**
  * トークン使用量をフォーマット
@@ -31,7 +32,7 @@ export function displayMetricsSummary(
     return;
   }
 
-  console.log("\n📊 Metrics Summary");
+  console.log(`\n${t("ui.labels.metricsSummary")}`);
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
   if (commandMetrics) {
@@ -39,7 +40,7 @@ export function displayMetricsSummary(
     console.log(`Duration: ${formatDuration(commandMetrics.duration_ms)}`);
     console.log();
 
-    console.log(`LLM Calls: ${commandMetrics.llm_calls}`);
+    console.log(`${t("ui.labels.llmCalls")}: ${commandMetrics.llm_calls}`);
 
     const totalTokens = commandMetrics.total_tokens;
     const hasTokenData = totalTokens > 0;
@@ -56,21 +57,21 @@ export function displayMetricsSummary(
         }
       }
 
-      console.log(`  Input Tokens:  ${formatTokenUsage(inputTotal)}`);
-      console.log(`  Output Tokens: ${formatTokenUsage(outputTotal)}`);
-      console.log(`  Total Tokens:  ${formatTokenUsage(totalTokens)}`);
+      console.log(`  ${t("ui.labels.inputTokens")}:  ${formatTokenUsage(inputTotal)}`);
+      console.log(`  ${t("ui.labels.outputTokens")}: ${formatTokenUsage(outputTotal)}`);
+      console.log(`  ${t("ui.labels.totalTokens")}:  ${formatTokenUsage(totalTokens)}`);
     } else {
-      console.log(`  Total Tokens:  (N/A - プロバイダ非対応)`);
+      console.log(`  ${t("ui.labels.totalTokens")}:  ${t("ui.labels.providerNotSupported")}`);
     }
 
-    console.log(`  Avg Response:  ${formatDuration(commandMetrics.avg_response_ms)}`);
+    console.log(`  ${t("ui.labels.avgResponse")}:  ${formatDuration(commandMetrics.avg_response_ms)}`);
   } else {
-    console.log("No metrics collected.");
+    console.log(t("ui.labels.noMetrics"));
   }
 
   // verboseモードでは詳細を表示
   if (outputLevel === "verbose" && llmMetrics.length > 0) {
-    console.log("\n📋 LLM Call Details:");
+    console.log(`\n${t("ui.labels.llmCallDetails")}`);
     for (let i = 0; i < llmMetrics.length; i++) {
       const m = llmMetrics[i];
       console.log(`  [${i + 1}] ${m.provider}/${m.model}`);
@@ -91,11 +92,11 @@ export function displayMetricsSummary(
  */
 export function displayMetricsHistory(commands: CommandMetrics[]): void {
   if (commands.length === 0) {
-    console.log("📊 No command history available.");
+    console.log(t("ui.labels.noCommandHistory"));
     return;
   }
 
-  console.log("\n📊 Recent Commands (Last 20)");
+  console.log(`\n${t("ui.labels.commandHistory")}`);
 
   const data = [
     ["Timestamp", "Command", "Duration", "Calls", "Tokens"],
@@ -144,11 +145,11 @@ export function displayMetricsHistory(commands: CommandMetrics[]): void {
  * 統計情報を表示
  */
 export function displayStatistics(stats: MetricsStatistics, days: number): void {
-  console.log(`\n📈 Statistics (Last ${days} Days)`);
+  console.log(`\n${t("ui.labels.statistics", { days })}`);
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-  console.log(`Commands:     ${stats.commands}`);
-  console.log(`LLM Calls:    ${stats.llm_calls}`);
-  console.log(`Total Tokens: ${formatTokenUsage(stats.total_tokens)}`);
-  console.log(`Avg Response: ${formatDuration(stats.avg_response_ms)}`);
-  console.log(`Total Time:   ${formatDuration(stats.total_duration_ms)}`);
+  console.log(`${t("ui.labels.commands")}:     ${stats.commands}`);
+  console.log(`${t("ui.labels.llmCalls")}:    ${stats.llm_calls}`);
+  console.log(`${t("ui.labels.totalTokens")}: ${formatTokenUsage(stats.total_tokens)}`);
+  console.log(`${t("ui.labels.avgResponse")}: ${formatDuration(stats.avg_response_ms)}`);
+  console.log(`${t("ui.labels.totalTime")}:   ${formatDuration(stats.total_duration_ms)}`);
 }

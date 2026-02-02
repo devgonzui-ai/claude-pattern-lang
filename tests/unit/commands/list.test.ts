@@ -15,10 +15,23 @@ vi.mock("../../../src/utils/logger.js", () => ({
   error: vi.fn(),
 }));
 
+vi.mock("../../../src/i18n/index.js", () => ({
+  t: vi.fn((key: string) => {
+    const messages: Record<string, string> = {
+      "messages.list.noPatterns": "No patterns found.",
+      "cli.commands.list.description": "Display saved patterns list",
+      "cli.commands.list.options.type": "Filter by type",
+      "cli.commands.list.options.search": "Keyword search",
+      "cli.commands.list.options.json": "Output in JSON format",
+    };
+    return messages[key] || key;
+  }),
+}));
+
 describe("listCommand", () => {
   const mockPatterns: Pattern[] = [
     {
-      id: "1",
+      id: "abc12345-6789-abcd-ef01-234567890abc",
       name: "テストパターン1",
       type: "prompt",
       context: "テストコンテキスト1",
@@ -27,7 +40,7 @@ describe("listCommand", () => {
       updated_at: "2024-01-01T00:00:00Z",
     },
     {
-      id: "2",
+      id: "def98765-4321-dcba-98fe-dcba09876543",
       name: "テストパターン2",
       type: "code",
       context: "テストコンテキスト2",
@@ -41,7 +54,7 @@ describe("listCommand", () => {
     vi.clearAllMocks();
   });
 
-  it("パターン一覧をテーブル形式で表示する", async () => {
+  it("パターン一覧をテーブル形式で表示する（IDを含む）", async () => {
     vi.mocked(store.loadCatalog).mockResolvedValue({ patterns: mockPatterns });
 
     await listCommand.parseAsync(["node", "test", "list"]);
@@ -49,8 +62,16 @@ describe("listCommand", () => {
     expect(store.loadCatalog).toHaveBeenCalled();
     expect(logger.table).toHaveBeenCalledWith(
       expect.arrayContaining([
-        expect.objectContaining({ Name: "テストパターン1", Type: "prompt" }),
-        expect.objectContaining({ Name: "テストパターン2", Type: "code" }),
+        expect.objectContaining({
+          ID: "abc12345",  // IDの最初の8文字
+          Name: "テストパターン1",
+          Type: "prompt",
+        }),
+        expect.objectContaining({
+          ID: "def98765",  // IDの最初の8文字
+          Name: "テストパターン2",
+          Type: "code",
+        }),
       ])
     );
   });
@@ -107,6 +128,7 @@ describe("listCommand", () => {
     // Commander が状態を保持するため、前のテストの--searchの影響でフィルタされることがある
     // 最低1件以上のJSONが出力されていることを確認
     expect(parsed.length).toBeGreaterThanOrEqual(1);
+    expect(parsed[0].id).toBeDefined();
     expect(parsed[0].name).toBeDefined();
     consoleSpy.mockRestore();
   });
@@ -116,6 +138,6 @@ describe("listCommand", () => {
 
     await listCommand.parseAsync(["node", "test", "list"]);
 
-    expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("パターン"));
+    expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("No patterns"));
   });
 });

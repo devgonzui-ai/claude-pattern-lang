@@ -33,7 +33,7 @@ describe("E2E: cpl analyze", () => {
     const result = await runCli(["analyze"], env);
 
     expect(result.exitCode).toBe(0);
-    expect(result.stdout).toContain("見つかりません");
+    expect(result.stdout).toContain("No sessions found");
   });
 
   it("ERR-005: セッションログが空 - エントリがないメッセージを表示", async () => {
@@ -43,7 +43,7 @@ describe("E2E: cpl analyze", () => {
     const result = await runCli(["analyze"], env);
 
     // セッションは見つかるがエントリがない
-    expect(result.stdout).toMatch(/解析|エントリ/);
+    expect(result.stdout).toMatch(/Analyzing|session/);
   });
 
   it("ERR-001: APIキー未設定 - エラーメッセージを表示", async () => {
@@ -94,7 +94,7 @@ describe("E2E: cpl analyze", () => {
     const result = await runCli(["analyze", "--since", futureDateStr], env);
 
     // フィルタ条件に一致するセッションがない
-    expect(result.stdout).toContain("一致");
+    expect(result.stdout).toContain("No sessions matching");
   });
 
   it("--dry-run オプション - 保存せず結果のみ表示", async () => {
@@ -162,6 +162,6 @@ describe("E2E: cpl analyze - セッション検出", () => {
 
     // 3件のセッションを解析というメッセージ
     expect(result.stdout).toContain("3");
-    expect(result.stdout).toContain("セッション");
+    expect(result.stdout).toContain("session");
   });
 });

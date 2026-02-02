@@ -1,8 +1,21 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import {
   validatePatternInput,
   type ValidationResult,
 } from "../../src/core/catalog/validator.js";
+
+// i18nのモック
+vi.mock("../../src/i18n/index.js", () => ({
+  t: vi.fn((key: string) => {
+    const messages: Record<string, string> = {
+      "validation.nameRequired": "Pattern name is required",
+      "validation.typeInvalid": "type must be one of: prompt, solution, code",
+      "validation.contextRequired": "context is required",
+      "validation.solutionRequired": "solution is required",
+    };
+    return messages[key] || key;
+  }),
+}));
 
 describe("validatePatternInput", () => {
   describe("有効な入力", () => {
@@ -69,7 +82,7 @@ describe("validatePatternInput", () => {
 
       expect(result.valid).toBe(false);
       if (!result.valid) {
-        expect(result.errors).toContain("パターン名は必須です");
+        expect(result.errors).toContain("Pattern name is required");
       }
     });
 
@@ -85,7 +98,7 @@ describe("validatePatternInput", () => {
 
       expect(result.valid).toBe(false);
       if (!result.valid) {
-        expect(result.errors).toContain("contextは必須です");
+        expect(result.errors).toContain("context is required");
       }
     });
 
@@ -101,7 +114,7 @@ describe("validatePatternInput", () => {
 
       expect(result.valid).toBe(false);
       if (!result.valid) {
-        expect(result.errors).toContain("solutionは必須です");
+        expect(result.errors).toContain("solution is required");
       }
     });
 
@@ -117,9 +130,9 @@ describe("validatePatternInput", () => {
 
       expect(result.valid).toBe(false);
       if (!result.valid) {
-        expect(result.errors).toContain("パターン名は必須です");
-        expect(result.errors).toContain("contextは必須です");
-        expect(result.errors).toContain("solutionは必須です");
+        expect(result.errors).toContain("Pattern name is required");
+        expect(result.errors).toContain("context is required");
+        expect(result.errors).toContain("solution is required");
       }
     });
   });
@@ -138,7 +151,7 @@ describe("validatePatternInput", () => {
       expect(result.valid).toBe(false);
       if (!result.valid) {
         expect(result.errors).toContain(
-          "typeは prompt, solution, code のいずれかです"
+          "type must be one of: prompt, solution, code"
         );
       }
     });

@@ -82,7 +82,7 @@ patterns:
     const result = await runCli(["list"], env);
 
     expect(result.exitCode).toBe(0);
-    expect(result.stdout).toContain("パターンが見つかりませんでした");
+    expect(result.stdout).toContain("No patterns found");
   });
 
   it("カタログが空のファイルの場合 - エラーなく動作", async () => {
@@ -92,7 +92,7 @@ patterns:
     const result = await runCli(["list"], env);
 
     expect(result.exitCode).toBe(0);
-    expect(result.stdout).toContain("パターンが見つかりませんでした");
+    expect(result.stdout).toContain("No patterns found");
   });
 
   it("カタログにpatternsフィールドがない場合", async () => {
@@ -155,7 +155,7 @@ describe("E2E Error Handling: addコマンドの追加エラーケース", () =>
 
     const result = await runCli(["add", "--file", emptyPath], env);
 
-    expect(result.output).toContain("読み込めません");
+    expect(result.output).toContain("Could not read");
   });
 
   it("ディレクトリを指定 - エラーハンドリング", async () => {
@@ -180,7 +180,7 @@ describe("E2E Error Handling: addコマンドの追加エラーケース", () =>
     });
 
     expect(result.exitCode).toBe(0);
-    expect(result.stdout).toContain("追加しました");
+    expect(result.stdout).toContain("Added pattern");
   });
 });
 
@@ -201,13 +201,13 @@ describe("E2E Error Handling: showコマンドの追加エラーケース", () =
   it("空文字列のパターン名 - エラーハンドリング", async () => {
     const result = await runCli(["show", ""], env);
 
-    expect(result.output).toContain("見つかりません");
+    expect(result.output).toContain("not found");
   });
 
   it("スペースのみのパターン名 - エラーハンドリング", async () => {
     const result = await runCli(["show", "   "], env);
 
-    expect(result.output).toContain("見つかりません");
+    expect(result.output).toContain("not found");
   });
 });
 
@@ -236,7 +236,7 @@ describe("E2E Error Handling: removeコマンドの追加エラーケース", ()
     const result = await runCli(["remove", "パターン"], env);
 
     expect(result.exitCode).toBe(0);
-    expect(result.stdout).toContain("削除しました");
+    expect(result.stdout).toContain("Removed pattern");
 
     // 「パターンA」と「パターンB」は残っている
     const catalog = await env.readCatalog();
@@ -266,7 +266,7 @@ describe("E2E Error Handling: listコマンドの追加エラーケース", () =
     // 存在しないタイプ "invalid" でフィルタ（実際には無効なタイプ）
     const result = await runCli(["list", "--type", "code"], env);
 
-    expect(result.stdout).toContain("パターンが見つかりませんでした");
+    expect(result.stdout).toContain("No patterns found");
   });
 
   it("マッチしない検索キーワード - 0件を返す", async () => {
@@ -278,6 +278,6 @@ describe("E2E Error Handling: listコマンドの追加エラーケース", () =
 
     const result = await runCli(["list", "--search", "存在しないキーワード"], env);
 
-    expect(result.stdout).toContain("パターンが見つかりませんでした");
+    expect(result.stdout).toContain("No patterns found");
   });
 });

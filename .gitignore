@@ -8,7 +8,7 @@ dist/
 coverage/
 
 # Tests
-tests/
+#tests/
 
 # IDE
 .vscode/

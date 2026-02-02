@@ -1,0 +1,253 @@
+# Architecture Pattern Library
+# Software design best practices and patterns
+
+patterns:
+  - id: en-arch-001
+    name: Repository Pattern
+    type: code
+    context: When separating data access logic
+    solution: Abstract database operations with Repository layer
+    example: |
+      interface UserRepository {
+        findById(id: string): Promise<User | null>;
+        findByEmail(email: string): Promise<User | null>;
+        save(user: User): Promise<void>;
+      }
+
+      class SqlUserRepository implements UserRepository {
+        constructor(private db: Database) {}
+
+        async findById(id: string): Promise<User | null> {
+          const row = await this.db.query('SELECT * FROM users WHERE id = ?', [id]);
+          return row ? this.mapToUser(row) : null;
+        }
+
+        private mapToUser(row: any): User {
+          return { id: row.id, name: row.name, email: row.email };
+        }
+      }
+    tags: [architecture, data-access, repository, clean-architecture]
+
+  - id: en-arch-002
+    name: Service Layer Pattern
+    type: code
+    context: When separating business logic
+    solution: Implement business rules in Service layer
+    example: |
+      class UserService {
+        constructor(
+          private userRepo: UserRepository,
+          private emailService: EmailService
+        ) {}
+
+        async registerUser(data: RegisterDto): Promise<User> {
+          // Business rule implementation
+          const existing = await this.userRepo.findByEmail(data.email);
+          if (existing) {
+            throw new Error('Email already registered');
+          }
+
+          const user = await this.userRepo.save({
+            id: generateId(),
+            ...data,
+            createdAt: new Date()
+          });
+
+          await this.emailService.sendWelcome(user.email);
+          return user;
+        }
+      }
+    tags: [architecture, service-layer, business-logic]
+
+  - id: en-arch-003
+    name: Factory Pattern
+    type: code
+    context: When object creation logic is complex
+    solution: Centralize object creation with Factory function/class
+    example: |
+      interface PaymentConfig {
+        method: 'credit_card' | 'bank_transfer';
+        apiKey?: string;
+        accountNumber?: string;
+      }
+
+      function createPaymentProcessor(config: PaymentConfig) {
+        switch (config.method) {
+          case 'credit_card':
+            if (!config.apiKey) throw new Error('API key required');
+            return new CreditCardProcessor(config.apiKey);
+          case 'bank_transfer':
+            if (!config.accountNumber) throw new Error('Account required');
+            return new BankTransferProcessor(config.accountNumber);
+          default:
+            throw new Error('Unknown payment method');
+        }
+      }
+    tags: [architecture, factory, creational, object-creation]
+
+  - id: en-arch-004
+    name: Middleware Pipeline
+    type: code
+    context: When injecting common processing before/after requests
+    solution: Use middleware chain for request processing pipeline
+    example: |
+      type Middleware = (req: Request, next: () => Promise<Response>) => Promise<Response>;
+
+      async function applyMiddlewares(req: Request, middlewares: Middleware[]): Promise<Response> {
+        let index = 0;
+
+        const next = async (): Promise<Response> => {
+          if (index < middlewares.length) {
+            return middlewares[index++](req, next);
+          }
+          return new Response('OK');
+        };
+
+        return next();
+      }
+
+      // Usage
+      const logger: Middleware = async (req, next) => {
+        console.log(`${req.method} ${req.url}`);
+        return next();
+      };
+
+      const auth: Middleware = async (req, next) => {
+        if (!req.headers.get('Authorization')) {
+          return new Response('Unauthorized', { status: 401 });
+        }
+        return next();
+      };
+    tags: [architecture, middleware, pipeline, request-processing]
+
+  - id: en-arch-005
+    name: Observer Event Emitter
+    type: code
+    context: When notifying multiple components of state changes
+    solution: Use Observer pattern or EventEmitter
+    example: |
+      type Listener = (data: unknown) => void;
+
+      class EventEmitter {
+        private listeners: Map<string, Set<Listener>> = new Map();
+
+        on(event: string, listener: Listener): void {
+          if (!this.listeners.has(event)) {
+            this.listeners.set(event, new Set());
+          }
+          this.listeners.get(event)!.add(listener);
+        }
+
+        off(event: string, listener: Listener): void {
+          this.listeners.get(event)?.delete(listener);
+        }
+
+        emit(event: string, data: unknown): void {
+          this.listeners.get(event)?.forEach(listener => listener(data));
+        }
+      }
+
+      // Usage
+      const emitter = new EventEmitter();
+      emitter.on('user:created', (user) => {
+        console.log('User created:', user);
+      });
+      emitter.emit('user:created', { id: '1', name: 'Alice' });
+    tags: [architecture, observer, events, pubsub]
+
+  - id: en-arch-006
+    name: Singleton Pattern
+    type: code
+    context: When ensuring only one instance of a class exists
+    solution: Use private constructor and static instance
+    example: |
+      class DatabaseConnection {
+        private static instance: DatabaseConnection;
+        private connection: any;
+
+        private constructor() {
+          this.connection = createConnection();
+        }
+
+        static getInstance(): DatabaseConnection {
+          if (!DatabaseConnection.instance) {
+            DatabaseConnection.instance = new DatabaseConnection();
+          }
+          return DatabaseConnection.instance;
+        }
+      }
+
+      // Usage
+      const db1 = DatabaseConnection.getInstance();
+      const db2 = DatabaseConnection.getInstance();
+      // db1 === db2 (same instance)
+    tags: [architecture, singleton, creational]
+
+  - id: en-arch-007
+    name: Strategy Pattern
+    type: code
+    context: When multiple algorithms can be used interchangeably
+    solution: Define strategy interface and implement concrete strategies
+    example: |
+      interface SortStrategy {
+        sort(items: number[]): number[];
+      }
+
+      class QuickSort implements SortStrategy {
+        sort(items: number[]): number[] {
+          // Quick sort implementation
+          return items;
+        }
+      }
+
+      class MergeSort implements SortStrategy {
+        sort(items: number[]): number[] {
+          // Merge sort implementation
+          return items;
+        }
+      }
+
+      class Sorter {
+        constructor(private strategy: SortStrategy) {}
+
+        setStrategy(strategy: SortStrategy) {
+          this.strategy = strategy;
+        }
+
+        sort(items: number[]): number[] {
+          return this.strategy.sort(items);
+        }
+      }
+    tags: [architecture, strategy, behavioral]
+
+  - id: en-arch-008
+    name: Adapter Pattern
+    type: code
+    context: When making incompatible interfaces work together
+    solution: Create adapter class to translate between interfaces
+    example: |
+      // Third-party API with incompatible interface
+      class ThirdPartyWeatherAPI {
+        getWeather(location: string): { temp_c: number; condition: string } {
+          return { temp_c: 20, condition: 'Sunny' };
+        }
+      }
+
+      // Our expected interface
+      interface WeatherService {
+        getCurrentWeather(location: string): { temperature: number; description: string };
+      }
+
+      // Adapter
+      class WeatherAdapter implements WeatherService {
+        constructor(private api: ThirdPartyWeatherAPI) {}
+
+        getCurrentWeather(location: string) {
+          const data = this.api.getWeather(location);
+          return {
+            temperature: data.temp_c,
+            description: data.condition
+          };
+        }
+      }
+    tags: [architecture, adapter, structural]

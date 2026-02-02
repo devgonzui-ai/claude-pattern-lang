@@ -32,7 +32,7 @@ describe("E2E: cpl remove", () => {
     const result = await runCli(["remove", "削除対象パターン"], env);
 
     expect(result.exitCode).toBe(0);
-    expect(result.stdout).toContain("削除しました");
+    expect(result.stdout).toContain("Removed pattern");
     expect(result.stdout).toContain("削除対象パターン");
 
     // カタログから削除されたことを確認
@@ -46,7 +46,7 @@ describe("E2E: cpl remove", () => {
     const result = await runCli(["remove", "存在しないパターン"], env);
 
     expect(result.exitCode).toBe(0); // エラーでも終了コードは0
-    expect(result.output).toContain("見つかりません");
+    expect(result.output).toContain("not found");
   });
 
   it("複数パターンがある場合、指定したパターンのみ削除する", async () => {
@@ -58,7 +58,7 @@ describe("E2E: cpl remove", () => {
     const result = await runCli(["remove", "パターンB"], env);
 
     expect(result.exitCode).toBe(0);
-    expect(result.stdout).toContain("削除しました");
+    expect(result.stdout).toContain("Removed pattern");
 
     // パターンBのみ削除され、A, Cは残っている
     const catalog = await env.readCatalog();
@@ -95,7 +95,7 @@ describe("E2E: cpl remove", () => {
     const result = await runCli(["add", "--file", yamlPath], env);
 
     expect(result.exitCode).toBe(0);
-    expect(result.stdout).toContain("追加しました");
+    expect(result.stdout).toContain("Added pattern");
 
     const catalog = await env.readCatalog();
     expect(catalog.patterns.length).toBe(1);

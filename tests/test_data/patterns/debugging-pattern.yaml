@@ -1,0 +1,21 @@
+# デバッグ・トラブルシューティングのパターン
+
+patterns:
+  - name: async-promise-debug
+    type: solution
+    context: async関数でPromiseが正しく待機されない場合
+    problem: awaitを忘れているとPromiseが解決される前に処理が進む
+    solution: async関数内ではPromiseを返す関数呼び出しにawaitを付ける
+    example: |
+      // Bad
+      return bcrypt.compare(password, user.hash);
+      // Good
+      return await bcrypt.compare(password, user.hash);
+    tags: [async, debugging, promise, await]
+
+  - name: systematic-debug-workflow
+    type: prompt
+    context: バグ報告を受けた場合のデバッグ手法
+    solution: 関連ファイルを確認→エラーの状況把握→原因特定→修正の順で進める
+    example_prompt: "バグ調査をお願い。関連ファイルを確認してエラーの状況を把握して"
+    tags: [debugging, workflow, systematic]

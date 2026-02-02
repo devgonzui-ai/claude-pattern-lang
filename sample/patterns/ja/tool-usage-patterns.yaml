@@ -1,0 +1,68 @@
+# ツール使用パターン集
+# Claude Codeでのツール使用のベストプラクティス
+
+patterns:
+  - id: ja-tool-001
+    name: Read→Editワークフロー
+    type: prompt
+    context: ファイルの内容を確認してから編集したい場合
+    solution: 「まずReadで読んで、その結果を見てEditで編集する」と明示的に指示する
+    example_prompt: "src/utils/helper.tsを読んで、ログ出力部分をconsole.logからloggerに変更して"
+    tags: [workflow, file-operation, read-edit]
+    notes: Readの結果を見てから編集内容を決められるので、ミスを防げる
+
+  - id: ja-tool-002
+    name: 検索してから修正
+    type: prompt
+    context: 影響範囲を把握してから修正したい場合
+    solution: Grepで検索して関連ファイルを特定してから修正する
+    example_prompt: "TODOコメントをすべて検索して、一覧を見せて。その後で重要なものから修正して"
+    tags: [search, grep, codebase-exploration, refactoring]
+
+  - id: ja-tool-003
+    name: 類似変更を一括適用
+    type: prompt
+    context: 複数のファイルで同様の修正が必要な場合
+    solution: パターンを説明して、類似ファイルすべてに適用するよう指示する
+    example_prompt: "すべての.tsファイルで、any型を使っている関数の引数に適切な型をつけて"
+    tags: [refactoring, batch-operation, typescript]
+
+  - id: ja-tool-004
+    name: テスト駆動変更
+    type: prompt
+    context: 既存コードを安全に変更したい場合
+    solution: 先にテストを書いてから、そのテストが通るようにコードを変更する
+    example_prompt: "まずリファクタリングのためのテストを書いて、そのテストが通るようにコードを変更して"
+    tags: [tdd, testing, refactoring, safe-change]
+
+  - id: ja-tool-005
+    name: Gitで変更確認
+    type: prompt
+    context: 変更内容を確認したい場合
+    solution: git diffで変更内容を確認させる
+    example_prompt: "変更が終わったらgit diffで確認させて"
+    tags: [git, verification, review]
+
+  - id: ja-tool-006
+    name: Globで構造把握
+    type: prompt
+    context: プロジェクト構造やファイルの一覧を把握したい場合
+    solution: Globパターンでファイルを検索する
+    example_prompt: "src/components/**/*.tsxをすべて見つけて"
+    tags: [file-search, glob, project-structure]
+
+  - id: ja-tool-007
+    name: 段階的ファイル作成
+    type: prompt
+    context: 複数の関連ファイルを作成する場合
+    solution: 依存関係を考慮して順番に作成するよう指示する
+    example_prompt: "まず型定義ファイルを作って、それをインポートする実装ファイルを作って、最後にテストファイルを作って"
+    tags: [file-creation, workflow, dependencies]
+
+  - id: ja-tool-008
+    name: コンテキストスイッチ
+    type: prompt
+    context: 別のファイルに移動して作業を再開する場合
+    solution: 現在のファイルをReadしてコンテキストを再読み込みさせる
+    example_prompt: "src/feature.tsの内容を確認して、その続きを実装して"
+    tags: [context, read, workflow]

@@ -1,0 +1,89 @@
+# 効果的なプロンプトパターン集
+# Claude Codeに指示を出す際のベストプラクティス
+
+patterns:
+  - id: ja-prompt-001
+    name: コンテキスト提供プロンプト
+    type: prompt
+    context: 新しい機能の実装や複雑な修正を依頼する場合
+    solution: 関連ファイルのパスや背景情報を含めて指示する
+    example_prompt: |
+      src/auth/login.tsとsrc/auth/types.tsを読んで、
+      ログイン関数にリメンバーミー機能を追加して。
+      トークンの有効期限は30日にして。
+    tags: [prompt-engineering, context, clarity]
+    notes: ファイルパスを明示するとAIが迷わず済む
+
+  - id: ja-prompt-002
+    name: 制約条件明示プロンプト
+    type: prompt
+    context: 特定の制約条件がある実装を依頼する場合
+    solution: 実装の制約や条件を明確に伝える
+    example_prompt: |
+      パフォーマンスが重要なので、O(n)で実装して。
+      外部ライブラリは追加せず、標準ライブラリだけ使って。
+    tags: [prompt-engineering, constraints, requirements]
+
+  - id: ja-prompt-003
+    name: 例示プロンプト
+    type: prompt
+    context: 期待する出力形式や処理内容を伝えたい場合
+    solution: 入出力の例を示す
+    example_prompt: |
+      日付を「2024年1月29日」の形式に変換する関数を作って。
+      例: new Date('2024-01-29') -> '2024年1月29日'
+    tags: [prompt-engineering, examples, clarity]
+
+  - id: ja-prompt-004
+    name: 段階的改善プロンプト
+    type: prompt
+    context: 最初の実装から改善したい場合
+    solution: 現在のコードを指摘して、具体的に改善点を伝える
+    example_prompt: |
+      src/utils/formatter.tsの関数が遅いみたい。
+      正規表現をキャッシュしてパフォーマンスを改善して。
+    tags: [prompt-engineering, refactoring, performance]
+
+  - id: ja-prompt-005
+    name: ステップバイステッププロンプト
+    type: prompt
+    context: 複数ステップにわたる作業を依頼する場合
+    solution: ステップを番号付きで明確に指示する
+    example_prompt: |
+      以下の手順で実装して：
+      1. 型定義を src/types/user.ts に作成
+      2. 実装を src/services/user.ts に作成
+      3. テストを tests/user.test.ts に作成
+    tags: [prompt-engineering, workflow, multi-step]
+
+  - id: ja-prompt-006
+    name: 比較検討プロンプト
+    type: prompt
+    context: 複数のアプローチを検討したい場合
+    solution: 比較して理由も含めて提案させる
+    example_prompt: |
+      認証機能を実装したい。
+      JWTとセッションベースの両方を検討して、
+      このプロジェクトに適した方を実装して。
+      選んだ理由も教えて。
+    tags: [prompt-engineering, architecture, decision-making]
+
+  - id: ja-prompt-007
+    name: 要件確認プロンプト
+    type: prompt
+    context: 要件が不明確で確認したい場合
+    solution: AIに質問して詳細を確認させる
+    example_prompt: |
+      この機能の仕様を決めたいんだけど、
+      考慮すべき点を整理して質問して。
+    tags: [prompt-engineering, requirements, clarification]
+
+  - id: ja-prompt-008
+    name: テストファーストプロンプト
+    type: prompt
+    context: テスト可能な実装を依頼する場合
+    solution: テストを先に書かせる、あるいはテストと実装をセットで書かせる
+    example_prompt: |
+      テスト可能な形で実装して。
+      最初にテストコードを書いて、そのテストが通るように実装して。
+    tags: [prompt-engineering, tdd, testing]

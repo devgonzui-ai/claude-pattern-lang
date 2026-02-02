@@ -1,0 +1,194 @@
+# Coding Pattern Library
+# Universal best practices for coding with Claude Code
+
+patterns:
+  - id: en-coding-001
+    name: Read Before Modify
+    type: prompt
+    context: When modifying, deleting, or refactoring existing code
+    solution: Always use the Read tool to verify file contents before making changes
+    example_prompt: "Read the file first, then make the changes" or "Check the file with Read before editing"
+    tags: [coding, file-operation, safe-edit]
+    notes: Ensures AI understands current state before applying changes
+
+  - id: en-coding-002
+    name: Async Error Handling
+    type: code
+    context: When error handling is needed in async functions
+    solution: Use try-catch-finally pattern for proper error handling
+    example: |
+      export async function apiCall(): Promise<Result> {
+        try {
+          const response = await fetch(url);
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          return await response.json();
+        } catch (error) {
+          console.error('API call failed:', error);
+          throw error; // Re-throw or return fallback value
+        } finally {
+          // Cleanup if needed
+        }
+      }
+    tags: [async, typescript, error-handling, api]
+
+  - id: en-coding-003
+    name: Early Return Pattern
+    type: code
+    context: When improving readability in functions with multiple conditions
+    solution: Check error or early exit conditions first and return early
+    example: |
+      function processUser(user: User | null): Result {
+        if (!user) {
+          throw new Error('User is required');
+        }
+        if (!user.isActive) {
+          return { success: false, reason: 'inactive' };
+        }
+        // Main processing
+        return doSomething(user);
+      }
+    tags: [readability, defensive-coding, guard-clause]
+
+  - id: en-coding-004
+    name: Type Guard Predicate
+    type: code
+    context: When narrowing types in TypeScript
+    solution: Use type guard functions (is predicates)
+    example: |
+      function isString(value: unknown): value is string {
+        return typeof value === 'string';
+      }
+
+      function process(value: unknown) {
+        if (isString(value)) {
+          // value is treated as string here
+          return value.toUpperCase();
+        }
+      }
+    tags: [typescript, types, type-narrowing]
+
+  - id: en-coding-005
+    name: Immutable Update
+    type: code
+    context: When updating objects or arrays immutably
+    solution: Create new objects using spread operator
+    example: |
+      // Object update
+      const updated = { ...original, field: newValue };
+
+      // Nested update
+      const updatedNested = {
+        ...original,
+        nested: { ...original.nested, field: newValue }
+      };
+
+      // Array update
+      const updatedArray = [...originalArray, newItem];
+      const updatedItem = array.map((item, i) =>
+        i === index ? newItem : item
+      );
+    tags: [immutability, functional, javascript]
+
+  - id: en-coding-006
+    name: DTO Validation
+    type: code
+    context: When validating API or external input
+    solution: Process in order: input → validation → transformation
+    example: |
+      interface CreateUserDto {
+        name: string;
+        email: string;
+      }
+
+      function validateCreateUser(input: unknown): CreateUserDto {
+        if (!input || typeof input !== 'object') {
+          throw new Error('Invalid input');
+        }
+        const { name, email } = input as Record<string, unknown>;
+        if (!name || typeof name !== 'string') {
+          throw new Error('name is required and must be a string');
+        }
+        if (!email || typeof email !== 'string' || !email.includes('@')) {
+          throw new Error('email is required and must be valid');
+        }
+        return { name, email };
+      }
+    tags: [validation, typescript, dto, api]
+
+  - id: en-coding-007
+    name: Dependency Injection
+    type: code
+    context: When making class dependencies testable
+    solution: Inject dependencies through constructor
+    example: |
+      class UserService {
+        constructor(
+          private db: Database,
+          private emailService: EmailService
+        ) {}
+
+        async notifyUser(userId: string) {
+          const user = await this.db.findUser(userId);
+          await this.emailService.send(user.email, 'Hello');
+        }
+      }
+
+      // In tests, inject mocks
+      // const service = new UserService(mockDb, mockEmail);
+    tags: [dependency-injection, testing, oop, architecture]
+
+  - id: en-coding-008
+    name: Enum Mapping
+    type: code
+    context: When mapping between enum values and display values
+    solution: Define mapping as an object
+    example: |
+      enum Status {
+        Active = 'active',
+        Inactive = 'inactive',
+        Pending = 'pending'
+      }
+
+      const STATUS_LABELS: Record<Status, string> = {
+        [Status.Active]: 'Active',
+        [Status.Inactive]: 'Inactive',
+        [Status.Pending]: 'Pending'
+      };
+
+      // Usage
+      const label = STATUS_LABELS[user.status];
+    tags: [mapping, enum, typescript]
+
+  - id: en-coding-009
+    name: Null Coalescing Chain
+    type: code
+    context: When safely accessing nested properties that might be null
+    solution: Use optional chaining and nullish coalescing
+    example: |
+      // Safe property access
+      const name = user?.profile?.name ?? 'Unknown';
+
+      // Safe array access
+      const firstItem = items?.[0] ?? null;
+
+      // Safe method call
+      const result = object?.method?.() ?? defaultResult;
+    tags: [null-safety, typescript, optional-chaining]
+
+  - id: en-coding-010
+    name: Generic Constraint
+    type: code
+    context: When creating generic functions with type constraints
+    solution: Use extends to constrain generic types
+    example: |
+      function getById<T extends { id: string }>(
+        items: T[],
+        id: string
+      ): T | undefined {
+        return items.find(item => item.id === id);
+      }
+
+      // Usage with type safety
+      const users: User[] = [...];
+      const user = getById(users, '123'); // Type is User | undefined
+    tags: [typescript, generics, type-constraints]

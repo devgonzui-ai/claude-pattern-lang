@@ -1,0 +1,84 @@
+# Tool Usage Pattern Library
+# Best practices for using Claude Code tools effectively
+
+patterns:
+  - id: en-tool-001
+    name: Read Then Edit Workflow
+    type: prompt
+    context: When reviewing file content before editing
+    solution: Explicitly instruct to "Read first, then Edit based on what you see"
+    example_prompt: "Read src/utils/helper.ts and change the console.log to logger"
+    tags: [workflow, file-operation, read-edit]
+    notes: Reading first allows AI to understand context before making changes
+
+  - id: en-tool-002
+    name: Search Before Modify
+    type: prompt
+    context: When understanding impact scope before making fixes
+    solution: Use Grep to find related files first, then fix them
+    example_prompt: "Search for all TODO comments, show me the list, then fix the important ones"
+    tags: [search, grep, codebase-exploration, refactoring]
+
+  - id: en-tool-003
+    name: Batch Similar Changes
+    type: prompt
+    context: When similar fixes are needed across multiple files
+    solution: Describe the pattern and ask to apply to all similar files
+    example_prompt: "In all .ts files, add proper types to function parameters that use 'any'"
+    tags: [refactoring, batch-operation, typescript]
+
+  - id: en-tool-004
+    name: Test Driven Change
+    type: prompt
+    context: When making changes to existing code safely
+    solution: Write tests first, then implement to make tests pass
+    example_prompt: "First write tests for the refactoring, then implement so tests pass"
+    tags: [tdd, testing, refactoring, safe-change]
+
+  - id: en-tool-005
+    name: Verify With Git
+    type: prompt
+    context: When reviewing changes after completion
+    solution: Use git diff to verify changes
+    example_prompt: "When done, show me git diff to review the changes"
+    tags: [git, verification, review]
+
+  - id: en-tool-006
+    name: Glob For Structure
+    type: prompt
+    context: When exploring project structure or finding files
+    solution: Use Glob patterns to search for files
+    example_prompt: "Find all files matching src/components/**/*.tsx"
+    tags: [file-search, glob, project-structure]
+
+  - id: en-tool-007
+    name: Progressive File Creation
+    type: prompt
+    context: When creating multiple related files
+    solution: Ask to create in dependency order
+    example_prompt: "Create the type definition file first, then the implementation file that imports it, then the test file"
+    tags: [file-creation, workflow, dependencies]
+
+  - id: en-tool-008
+    name: Read For Context Switch
+    type: prompt
+    context: When switching to work on a different file
+    solution: Read the current file to reload context
+    example_prompt: "Review src/feature.ts and continue implementing from there"
+    tags: [context, read, workflow]
+
+  - id: en-tool-009
+    name: Explore Before Implement
+    type: prompt
+    context: When starting work on an unfamiliar codebase
+    solution: Ask to explore relevant parts before implementing
+    example_prompt: "First explore how authentication is currently implemented, then add the new feature"
+    tags: [exploration, codebase-understanding, context]
+
+  - id: en-tool-010
+    name: Iterative Refinement
+    type: prompt
+    context: When improving existing code gradually
+    solution: Make small changes and verify each step
+    example_prompt: "Refactor this function step by step, showing me each change"
+    tags: [refactoring, iterative, small-steps]

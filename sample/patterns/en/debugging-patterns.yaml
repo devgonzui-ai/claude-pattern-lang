@@ -1,0 +1,144 @@
+# Debugging & Troubleshooting Pattern Library
+# Systematic approaches to problem-solving
+
+patterns:
+  - id: en-debug-001
+    name: Systematic Debug Workflow
+    type: solution
+    context: When encountering bugs or errors
+    problem: Unknown error cause, unclear where to start investigation
+    solution: |
+      1. Check error messages and stack traces
+      2. Locate the problematic code from stack trace
+      3. Read related files to understand context
+      4. Form hypothesis about root cause
+      5. Apply minimal fix
+      6. Verify the solution
+    example: |
+      User: "Getting an error in login process"
+      AI: "Let me check the error logs. The relevant file is src/auth/login.ts.
+          I'll read it to understand the issue."
+    tags: [debugging, workflow, systematic, troubleshooting]
+
+  - id: en-debug-002
+    name: Module Not Found (ESM)
+    type: solution
+    context: When encountering "Cannot find module" errors
+    problem: Missing extension in ESM or incorrect export
+    solution: |
+      1. Check the module path in error message
+      2. Verify import path is correct
+      3. Check package.json "type" field ("module" means ESM)
+      4. In ESM, .js extension is required (even for TypeScript)
+      5. Verify the export exists in target file
+    example: |
+      // In ESM
+      import { helper } from './utils/helper.js';  // .js required
+
+      // Or verify export exists
+      // export function helper() { ... }
+    tags: [debugging, esm, module-resolution, typescript]
+
+  - id: en-debug-003
+    name: Async Await Missing
+    type: solution
+    context: When getting undefined or Promise objects instead of values
+    problem: Forgetting await in async function
+    solution: Add await before Promise-returning function calls
+    example: |
+      // Bad: Function continues before Promise resolves
+      const result = fetch(url);
+
+      // Good: Wait for result
+      const result = await fetch(url);
+    tags: [async, debugging, promise, await]
+
+  - id: en-debug-004
+    name: Type Assertion Check
+    type: solution
+    context: When facing TypeScript type errors
+    problem: Type inference failing or missing type definitions
+    solution: |
+      1. Check actual value type (typeof, console.log)
+      2. Review interface definitions
+      3. Use type guard functions for narrowing
+      4. Use type assertions cautiously if needed
+      5. Convert from unknown to proper type
+    example: |
+      function isUser(value: unknown): value is User {
+        return typeof value === 'object' &&
+               value !== null &&
+               'id' in value &&
+               'name' in value;
+      }
+    tags: [typescript, types, debugging, type-guard]
+
+  - id: en-debug-005
+    name: Null Reference Check
+    type: solution
+    context: When getting "Cannot read property 'x' of null" errors
+    problem: Accessing object properties when object might be null/undefined
+    solution: Add optional chaining (?.) or null checks
+    example: |
+      // Bad
+      const name = user.profile.name;
+
+      // Good with optional chaining
+      const name = user?.profile?.name;
+
+      // Good with explicit check
+      if (user?.profile) {
+        const name = user.profile.name;
+      }
+    tags: [debugging, null-safety, typescript, javascript]
+
+  - id: en-debug-006
+    name: Race Condition Async
+    type: solution
+    context: When async execution order is not as expected
+    problem: Parallel execution with Promise.all doesn't guarantee order
+    solution: Use for-of with await for sequential, or handle Promise.all results as array
+    example: |
+      // Sequential execution (order matters)
+      for (const item of items) {
+        await processItem(item);
+      }
+
+      // Parallel execution (order doesn't matter)
+      const results = await Promise.all(items.map(item => processItem(item)));
+    tags: [async, debugging, promise, race-condition]
+
+  - id: en-debug-007
+    name: Environment Variable Debug
+    type: solution
+    context: When environment variables are not loading correctly
+    problem: Undefined or incorrect environment variable values
+    solution: |
+      1. Check .env file exists and is in correct location
+      2. Verify variable names match (case-sensitive)
+      3. Ensure dotenv is configured and loaded
+      4. Check for .env in .gitignore if using git
+      5. Use process.env.VAR or import.meta.env for access
+    example: |
+      // Verify env is loaded
+      console.log('API Key:', process.env.API_KEY ? 'Loaded' : 'Missing');
+    tags: [debugging, environment, configuration]
+
+  - id: en-debug-008
+    name: CORS Error Debug
+    type: solution
+    context: When getting CORS errors in API calls
+    problem: Browser blocks cross-origin requests
+    solution: |
+      1. Configure CORS on the server backend
+      2. Add allowed origins, methods, headers
+      3. For development, allow all origins with caution
+      4. Handle preflight OPTIONS requests
+    example: |
+      // Express.js CORS setup
+      app.use(cors({
+        origin: ['https://example.com'],
+        methods: ['GET', 'POST'],
+        credentials: true
+      }));
+    tags: [debugging, api, cors, web]

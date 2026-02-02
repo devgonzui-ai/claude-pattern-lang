@@ -7,10 +7,23 @@ import type { Pattern } from "../../../src/types/index.js";
 // モック
 vi.mock("../../../src/core/catalog/store.js", () => ({
   getPattern: vi.fn(),
+  getPatternByIdentifier: vi.fn(),
 }));
 
 vi.mock("../../../src/utils/logger.js", () => ({
   error: vi.fn(),
+  info: vi.fn(),
+}));
+
+vi.mock("../../../src/i18n/index.js", () => ({
+  t: vi.fn((key: string, params?: Record<string, unknown>) => {
+    const messages: Record<string, string> = {
+      "messages.show.notFound": `Pattern "${params?.identifier}" not found.`,
+      "messages.show.ambiguousId": `ID "${params?.identifier}" matches multiple patterns:`,
+      "messages.common.ambiguousIdPrefix": `  ${params?.shortId}...  ${params?.name}`,
+    };
+    return messages[key] || key;
+  }),
 }));
 
 describe("showAction", () => {
@@ -31,13 +44,13 @@ describe("showAction", () => {
     vi.clearAllMocks();
   });
 
-  it("指定したパターンの詳細をYAML形式で表示する", async () => {
-    vi.mocked(store.getPattern).mockResolvedValue(mockPattern);
+  it("指定したパターンの詳細をYAML形式で表示する（デフォルト：ID→名前の優先順位）", async () => {
+    vi.mocked(store.getPatternByIdentifier).mockResolvedValue(mockPattern);
     const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
 
-    await showAction("テストパターン");
+    await showAction("test-id", {});
 
-    expect(store.getPattern).toHaveBeenCalledWith("テストパターン");
+    expect(store.getPatternByIdentifier).toHaveBeenCalledWith("test-id");
     expect(consoleSpy).toHaveBeenCalled();
     // YAML形式で出力されていることを確認
     const output = consoleSpy.mock.calls.map((c) => c[0]).join("\n");
@@ -47,14 +60,26 @@ describe("showAction", () => {
     consoleSpy.mockRestore();
   });
 
+  it("--nameオプション時は名前のみで検索する", async () => {
+    vi.mocked(store.getPattern).mockResolvedValue(mockPattern);
+    const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+    await showAction("テストパターン", { name: true });
+
+    expect(store.getPattern).toHaveBeenCalledWith("テストパターン");
+    expect(store.getPatternByIdentifier).not.toHaveBeenCalled();
+    expect(consoleSpy).toHaveBeenCalled();
+    consoleSpy.mockRestore();
+  });
+
   it("パターンが見つからない場合はエラーを表示する", async () => {
-    vi.mocked(store.getPattern).mockResolvedValue(null);
+    vi.mocked(store.getPatternByIdentifier).mockResolvedValue(null);
 
-    await showAction("存在しないパターン");
+    await showAction("存在しないパターン", {});
 
-    expect(store.getPattern).toHaveBeenCalledWith("存在しないパターン");
+    expect(store.getPatternByIdentifier).toHaveBeenCalledWith("存在しないパターン");
     expect(logger.error).toHaveBeenCalledWith(
-      expect.stringContaining("見つかりません")
+      expect.stringContaining("not found")
     );
   });
 });

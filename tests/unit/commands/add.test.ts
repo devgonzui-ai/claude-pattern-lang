@@ -22,6 +22,26 @@ vi.mock("../../../src/utils/fs.js", () => ({
 vi.mock("../../../src/utils/logger.js", () => ({
   success: vi.fn(),
   error: vi.fn(),
+  info: vi.fn(),
+}));
+
+vi.mock("../../../src/i18n/index.js", () => ({
+  t: vi.fn((key: string, params?: Record<string, unknown>) => {
+    const messages: Record<string, string> = {
+      "messages.add.fileNotFound": `Could not read file "${params?.path}".`,
+      "messages.add.validationError": `Validation error:\n  - ${params?.errors}`,
+      "messages.add.added": `Added pattern "${params?.name}".`,
+      "messages.add.interactive": "Adding pattern interactively.",
+      "messages.add.promptName": "Pattern name: ",
+      "messages.add.promptType": "Type (prompt/solution/code): ",
+      "messages.add.promptContext": "Context: ",
+      "messages.add.promptSolution": "Solution: ",
+      "cli.commands.add.description": "Add pattern manually",
+      "cli.commands.add.options.file": "Add from YAML file",
+      "cli.commands.add.options.interactive": "Interactive mode (default)",
+    };
+    return messages[key] || key;
+  }),
 }));
 
 describe("addFromFileAction", () => {
@@ -58,12 +78,12 @@ describe("addFromFileAction", () => {
     vi.mocked(fs.readYaml).mockResolvedValue(mockPatternInput);
     vi.mocked(validator.validatePatternInput).mockReturnValue({
       valid: false,
-      errors: ["名前は必須です"],
+      errors: ["Name is required"],
     });
 
     await addFromFileAction("/path/to/pattern.yaml");
 
-    expect(logger.error).toHaveBeenCalledWith(expect.stringContaining("名前は必須です"));
+    expect(logger.error).toHaveBeenCalledWith(expect.stringContaining("Name is required"));
     expect(store.addPattern).not.toHaveBeenCalled();
   });
 
@@ -72,6 +92,6 @@ describe("addFromFileAction", () => {
 
     await addFromFileAction("/path/to/not-found.yaml");
 
-    expect(logger.error).toHaveBeenCalledWith(expect.stringContaining("読み込めません"));
+    expect(logger.error).toHaveBeenCalledWith(expect.stringContaining("Could not read"));
   });
 });

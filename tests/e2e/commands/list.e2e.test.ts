@@ -88,7 +88,7 @@ describe("E2E: cpl list", () => {
     const result = await runCli(["list"], env);
 
     expect(result.exitCode).toBe(0);
-    expect(result.stdout).toContain("パターンが見つかりませんでした");
+    expect(result.stdout).toContain("No patterns found");
   });
 
   it("--type と --search の組み合わせで絞り込む", async () => {

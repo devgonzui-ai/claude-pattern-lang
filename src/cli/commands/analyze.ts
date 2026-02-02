@@ -9,7 +9,7 @@ import {
 } from "../../core/analyzer/session-parser.js";
 import { extractPatterns } from "../../core/analyzer/pattern-extractor.js";
 import { loadCatalog, addPattern } from "../../core/catalog/store.js";
-import { info, success, error, warn } from "../../utils/logger.js";
+import { info, success, error, warn, stringifyError } from "../../utils/logger.js";
 import { fileExists, readYaml, getConfigPath } from "../../utils/fs.js";
 import { displayMetricsSummary } from "../../utils/formatters.js";
 import { MetricsCollector } from "../../llm/metrics/collector.js";
@@ -17,9 +17,11 @@ import { MetricsStorage } from "../../llm/metrics/storage.js";
 import type { LLMConfig, PatternInput, Config, MetricsConfig } from "../../types/index.js";
 import { DEFAULT_CONFIG } from "../../types/config.js";
 import * as readline from "node:readline";
+import { t } from "../../i18n/index.js";
 
 interface AnalyzeOptions {
   session?: string;
+  file?: string;
   since?: string;
   project?: string;
   dryRun?: boolean;
@@ -48,19 +50,31 @@ async function confirm(message: string): Promise<boolean> {
  * - セッションログを解析してパターンを抽出
  */
 export const analyzeCommand = new Command("analyze")
-  .description("セッションログを解析してパターンを抽出")
-  .option("-s, --session <id>", "特定セッションのみ解析")
-  .option("-d, --since <date>", "指定日以降のセッションを解析")
-  .option("-p, --project <path>", "特定プロジェクトのみ")
-  .option("--dry-run", "保存せず結果のみ表示")
-  .option("--auto-approve", "確認なしで保存")
+  .description(t("cli.commands.analyze.description"))
+  .option("-s, --session <id>", t("cli.commands.analyze.options.session"))
+  .option("-f, --file <path>", t("cli.commands.analyze.options.file"))
+  .option("-d, --since <date>", t("cli.commands.analyze.options.since"))
+  .option("-p, --project <path>", t("cli.commands.analyze.options.project"))
+  .option("--dry-run", t("cli.commands.analyze.options.dryRun"))
+  .option("--auto-approve", t("cli.commands.analyze.options.autoApprove"))
   .action(async (options: AnalyzeOptions) => {
     try {
+      // ファイルが直接指定された場合
+      if (options.file) {
+        if (!(await fileExists(options.file))) {
+          error(t("messages.add.fileNotFound", { path: options.file }));
+          return;
+        }
+        // ファイルから直接解析
+        await analyzeFile(options.file, options);
+        return;
+      }
+
       // セッション一覧を取得
       let sessions = await listSessions(options.project);
 
       if (sessions.length === 0) {
-        warn("解析対象のセッションが見つかりませんでした。");
+        warn(t("messages.analyze.noSessions"));
         return;
       }
 
@@ -79,11 +93,11 @@ export const analyzeCommand = new Command("analyze")
       }
 
       if (sessions.length === 0) {
-        warn("フィルタ条件に一致するセッションがありません。");
+        warn(t("messages.analyze.noMatchingSessions"));
         return;
       }
 
-      info(`${sessions.length} 件のセッションを解析します...`);
+      info(t("messages.analyze.analyzingSessions", { count: sessions.length }));
 
       // 設定を読み込み
       let llmConfig: LLMConfig = DEFAULT_CONFIG.llm;
@@ -94,11 +108,11 @@ export const analyzeCommand = new Command("analyze")
         if (config) {
           llmConfig = config.llm || DEFAULT_CONFIG.llm;
           metricsConfig = config.metrics || DEFAULT_CONFIG.metrics;
-          info(`LLMプロバイダー: ${llmConfig.provider} (${llmConfig.model})`);
+          info(t("messages.analyze.llmProvider", { provider: llmConfig.provider, model: llmConfig.model }));
         }
       } else {
-        warn("設定ファイルが見つかりません。デフォルト設定を使用します。");
-        info("設定をカスタマイズするには `cpl init` を実行してください。");
+        warn(t("messages.analyze.configNotFound"));
+        info(t("messages.analyze.configCustomize"));
       }
 
       // メトリクス収集の初期化
@@ -119,7 +133,7 @@ export const analyzeCommand = new Command("analyze")
 
       // プログレスバーの作成
       const progressBar = new cliProgress.SingleBar({
-        format: '解析中 |{bar}| {percentage}% | {value}/{total} セッション | パターン数: {patterns}',
+        format: t("messages.analyze.progressFormat"),
         barCompleteChar: '\u2588',
         barIncompleteChar: '\u2591',
         hideCursor: true,
@@ -149,7 +163,7 @@ export const analyzeCommand = new Command("analyze")
 
           progressBar.increment({ patterns: allExtracted.length });
         } catch (err) {
-          error(`\nセッション ${session.id} の解析中にエラー: ${err}`);
+          error(`\n${t("messages.analyze.sessionError", { id: session.id, error: stringifyError(err) })}`);
           progressBar.increment({ patterns: allExtracted.length });
         }
       }
@@ -163,7 +177,7 @@ export const analyzeCommand = new Command("analyze")
       }
 
       if (allExtracted.length === 0) {
-        info("新しいパターンは抽出されませんでした。");
+        info(t("messages.analyze.noNewPatterns"));
 
         // メトリクスサマリー表示
         if (metricsConfig.enabled && collector && commandMetrics) {
@@ -184,12 +198,12 @@ export const analyzeCommand = new Command("analyze")
       }
 
       // 結果を表示
-      info(`\n抽出されたパターン (${allExtracted.length} 件):`);
+      info(`\n${t("messages.analyze.extractedPatterns", { count: allExtracted.length })}`);
       console.log(yaml.dump(allExtracted, { lineWidth: -1 }));
 
       // dry-runの場合は保存しない
       if (options.dryRun) {
-        info("[dry-run] パターンは保存されませんでした。");
+        info(t("messages.analyze.dryRun"));
 
         // メトリクスサマリー表示
         if (metricsConfig.enabled && collector && commandMetrics) {
@@ -204,9 +218,9 @@ export const analyzeCommand = new Command("analyze")
 
       // 確認
       if (!options.autoApprove) {
-        const shouldSave = await confirm("\nこれらのパターンを保存しますか?");
+        const shouldSave = await confirm(`\n${t("messages.analyze.saveConfirm")}`);
         if (!shouldSave) {
-          info("保存をキャンセルしました。");
+          info(t("messages.analyze.saveCancelled"));
 
           // メトリクスサマリー表示
           if (metricsConfig.enabled && collector && commandMetrics) {
@@ -225,7 +239,7 @@ export const analyzeCommand = new Command("analyze")
         await addPattern(pattern);
       }
 
-      success(`${allExtracted.length} 件のパターンを保存しました。`);
+      success(t("messages.analyze.patternsSaved", { count: allExtracted.length }));
 
       // メトリクスサマリー表示と保存
       if (metricsConfig.enabled && collector && commandMetrics) {
@@ -243,6 +257,183 @@ export const analyzeCommand = new Command("analyze")
         }
       }
     } catch (err) {
-      error(`エラー: ${err}`);
+      error(t("messages.analyze.error", { error: stringifyError(err) }));
     }
   });
+
+/**
+ * 単一ファイルを解析
+ */
+async function analyzeFile(filePath: string, options: AnalyzeOptions): Promise<void> {
+  // 設定を読み込み
+  let llmConfig: LLMConfig = DEFAULT_CONFIG.llm;
+  let metricsConfig: MetricsConfig = DEFAULT_CONFIG.metrics;
+  const configPath = getConfigPath();
+  if (await fileExists(configPath)) {
+    const config = await readYaml<Config>(configPath);
+    if (config) {
+      llmConfig = config.llm || DEFAULT_CONFIG.llm;
+      metricsConfig = config.metrics || DEFAULT_CONFIG.metrics;
+      info(t("messages.analyze.llmProvider", { provider: llmConfig.provider, model: llmConfig.model }));
+    }
+  } else {
+    warn(t("messages.analyze.configNotFound"));
+    info(t("messages.analyze.configCustomize"));
+  }
+
+  // メトリクス収集の初期化
+  const collector = metricsConfig.enabled ? new MetricsCollector() : undefined;
+  const storage = metricsConfig.enabled ? new MetricsStorage() : undefined;
+
+  // コマンド開始
+  if (collector) {
+    collector.startCommand("analyze");
+  }
+
+  // 既存パターンを取得
+  const catalog = await loadCatalog();
+  const existingPatterns = catalog.patterns;
+
+  info(t("messages.analyze.analyzingSessions", { count: 1 }));
+
+  // ファイルを解析
+  const allExtracted: PatternInput[] = [];
+  try {
+    const entries = await parseSessionLog(filePath);
+
+    if (entries.length === 0) {
+      info(t("messages.analyze.noNewPatterns"));
+
+      // メトリクスサマリー表示
+      if (metricsConfig.enabled && collector) {
+        const commandMetrics = collector.endCommand("analyze");
+        if (commandMetrics) {
+          displayMetricsSummary(
+            commandMetrics,
+            collector.getLLMMetrics(),
+            metricsConfig.output_level
+          );
+
+          // 自動保存
+          if (metricsConfig.auto_save && storage) {
+            await storage.addLLMMetrics(collector.getLLMMetrics());
+            await storage.addCommandMetrics(commandMetrics);
+            await storage.applyRetention(metricsConfig);
+          }
+        }
+      }
+      return;
+    }
+
+    const patterns = await extractPatterns(
+      entries,
+      existingPatterns,
+      llmConfig,
+      collector
+    );
+
+    if (patterns.length > 0) {
+      allExtracted.push(...patterns);
+    }
+  } catch (err) {
+    error(t("messages.analyze.error", { error: stringifyError(err) }));
+
+    // メトリクスサマリー表示
+    if (metricsConfig.enabled && collector) {
+      const commandMetrics = collector.endCommand("analyze");
+      displayMetricsSummary(
+        commandMetrics,
+        collector.getLLMMetrics(),
+        metricsConfig.output_level
+      );
+    }
+    return;
+  }
+
+  // コマンド終了
+  let commandMetrics = null;
+  if (collector) {
+    commandMetrics = collector.endCommand("analyze");
+  }
+
+  if (allExtracted.length === 0) {
+    info(t("messages.analyze.noNewPatterns"));
+
+    // メトリクスサマリー表示
+    if (metricsConfig.enabled && collector && commandMetrics) {
+      displayMetricsSummary(
+        commandMetrics,
+        collector.getLLMMetrics(),
+        metricsConfig.output_level
+      );
+
+      // 自動保存
+      if (metricsConfig.auto_save && storage) {
+        await storage.addLLMMetrics(collector.getLLMMetrics());
+        await storage.addCommandMetrics(commandMetrics);
+        await storage.applyRetention(metricsConfig);
+      }
+    }
+    return;
+  }
+
+  // 結果を表示
+  info(`\n${t("messages.analyze.extractedPatterns", { count: allExtracted.length })}`);
+  console.log(yaml.dump(allExtracted, { lineWidth: -1 }));
+
+  // dry-runの場合は保存しない
+  if (options.dryRun) {
+    info(t("messages.analyze.dryRun"));
+
+    // メトリクスサマリー表示
+    if (metricsConfig.enabled && collector && commandMetrics) {
+      displayMetricsSummary(
+        commandMetrics,
+        collector.getLLMMetrics(),
+        metricsConfig.output_level
+      );
+    }
+    return;
+  }
+
+  // 確認
+  if (!options.autoApprove) {
+    const shouldSave = await confirm(`\n${t("messages.analyze.saveConfirm")}`);
+    if (!shouldSave) {
+      info(t("messages.analyze.saveCancelled"));
+
+      // メトリクスサマリー表示
+      if (metricsConfig.enabled && collector && commandMetrics) {
+        displayMetricsSummary(
+          commandMetrics,
+          collector.getLLMMetrics(),
+          metricsConfig.output_level
+        );
+      }
+      return;
+    }
+  }
+
+  // 保存
+  for (const pattern of allExtracted) {
+    await addPattern(pattern);
+  }
+
+  success(t("messages.analyze.patternsSaved", { count: allExtracted.length }));
+
+  // メトリクスサマリー表示と保存
+  if (metricsConfig.enabled && collector && commandMetrics) {
+    displayMetricsSummary(
+      commandMetrics,
+      collector.getLLMMetrics(),
+      metricsConfig.output_level
+    );
+
+    // 自動保存
+    if (metricsConfig.auto_save && storage) {
+      await storage.addLLMMetrics(collector.getLLMMetrics());
+      await storage.addCommandMetrics(commandMetrics);
+      await storage.applyRetention(metricsConfig);
+    }
+  }
+}

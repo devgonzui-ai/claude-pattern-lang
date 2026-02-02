@@ -1,0 +1,110 @@
+# Effective Prompt Pattern Library
+# Best practices for communicating with Claude Code
+
+patterns:
+  - id: en-prompt-001
+    name: Context Providing Prompt
+    type: prompt
+    context: When requesting new features or complex fixes
+    solution: Include file paths and background information in instructions
+    example_prompt: |
+      Read src/auth/login.ts and src/auth/types.ts,
+      then add remember-me functionality to the login function.
+      Set token expiration to 30 days.
+    tags: [prompt-engineering, context, clarity]
+    notes: Explicit file paths help AI navigate directly
+
+  - id: en-prompt-002
+    name: Constraint Stating Prompt
+    type: prompt
+    context: When requesting implementation with specific constraints
+    solution: Clearly communicate implementation constraints
+    example_prompt: |
+      Performance is critical, implement with O(n) complexity.
+      Don't add external libraries, use only standard library.
+    tags: [prompt-engineering, constraints, requirements]
+
+  - id: en-prompt-003
+    name: Example Giving Prompt
+    type: prompt
+    context: When showing expected output format or behavior
+    solution: Provide input/output examples
+    example_prompt: |
+      Create a function to format dates as "January 29, 2024".
+      Example: new Date('2024-01-29') -> 'January 29, 2024'
+    tags: [prompt-engineering, examples, clarity]
+
+  - id: en-prompt-004
+    name: Iterative Refinement Prompt
+    type: prompt
+    context: When improving upon existing implementation
+    solution: Point to current code and specify improvements
+    example_prompt: |
+      The function in src/utils/formatter.ts seems slow.
+      Improve performance by caching the regex patterns.
+    tags: [prompt-engineering, refactoring, performance]
+
+  - id: en-prompt-005
+    name: Step By Step Prompt
+    type: prompt
+    context: When requesting multi-step work
+    solution: Number the steps for clear instruction
+    example_prompt: |
+      Implement in these steps:
+      1. Create type definitions in src/types/user.ts
+      2. Implement in src/services/user.ts
+      3. Add tests in tests/user.test.ts
+    tags: [prompt-engineering, workflow, multi-step]
+
+  - id: en-prompt-006
+    name: Comparison Prompt
+    type: prompt
+    context: When evaluating multiple approaches
+    solution: Ask for comparison with reasoning
+    example_prompt: |
+      I need authentication functionality.
+      Consider both JWT and session-based approaches,
+      then implement the one that fits this project.
+      Explain why you chose it.
+    tags: [prompt-engineering, architecture, decision-making]
+
+  - id: en-prompt-007
+    name: Clarification Requesting Prompt
+    type: prompt
+    context: When requirements are unclear
+    solution: Ask AI to gather requirements by asking questions
+    example_prompt: |
+      I want to define the feature specifications.
+      Organize the considerations and ask me questions.
+    tags: [prompt-engineering, requirements, clarification]
+
+  - id: en-prompt-008
+    name: Test First Prompt
+    type: prompt
+    context: When requesting testable implementation
+    solution: Ask for tests first or test + implementation together
+    example_prompt: |
+      Implement in a testable way.
+      Write test code first, then implement so tests pass.
+    tags: [prompt-engineering, tdd, testing]
+
+  - id: en-prompt-009
+    name: Explain Then Implement Prompt
+    type: prompt
+    context: When wanting to understand approach before implementation
+    solution: Ask for explanation first, then implementation
+    example_prompt: |
+      First explain how you would implement this feature,
+      including file structure and dependencies.
+      After I approve, implement it.
+    tags: [prompt-engineering, planning, explanation]
+
+  - id: en-prompt-010
+    name: Style Consistency Prompt
+    type: prompt
+    context: When requesting code that matches existing style
+    solution: Reference existing code as style guide
+    example_prompt: |
+      Follow the same coding style as src/components/Header.tsx.
+      Use the same naming conventions and structure.
+    tags: [prompt-engineering, style, consistency]

@@ -1,0 +1,156 @@
+# アーキテクチャパターン集
+# ソフトウェア設計のベストプラクティス
+
+patterns:
+  - id: ja-arch-001
+    name: Repositoryパターン
+    type: code
+    context: データアクセスロジックを分離したい場合
+    solution: Repositoryレイヤーでデータベースアクセスを抽象化
+    example: |
+      interface UserRepository {
+        findById(id: string): Promise<User | null>;
+        findByEmail(email: string): Promise<User | null>;
+        save(user: User): Promise<void>;
+      }
+
+      class SqlUserRepository implements UserRepository {
+        constructor(private db: Database) {}
+
+        async findById(id: string): Promise<User | null> {
+          const row = await this.db.query('SELECT * FROM users WHERE id = ?', [id]);
+          return row ? this.mapToUser(row) : null;
+        }
+
+        private mapToUser(row: any): User {
+          return { id: row.id, name: row.name, email: row.email };
+        }
+      }
+    tags: [architecture, data-access, repository, clean-architecture]
+
+  - id: ja-arch-002
+    name: Service Layerパターン
+    type: code
+    context: ビジネスロジックを分離したい場合
+    solution: Serviceレイヤーでビジネスルールを実装
+    example: |
+      class UserService {
+        constructor(
+          private userRepo: UserRepository,
+          private emailService: EmailService
+        ) {}
+
+        async registerUser(data: RegisterDto): Promise<User> {
+          // ビジネスルールの実装
+          const existing = await this.userRepo.findByEmail(data.email);
+          if (existing) {
+            throw new Error('Email already registered');
+          }
+
+          const user = await this.userRepo.save({
+            id: generateId(),
+            ...data,
+            createdAt: new Date()
+          });
+
+          await this.emailService.sendWelcome(user.email);
+          return user;
+        }
+      }
+    tags: [architecture, service-layer, business-logic]
+
+  - id: ja-arch-003
+    name: Factoryパターン
+    type: code
+    context: オブジェクトの生成ロジックが複雑な場合
+    solution: Factory関数/クラスで生成を集約
+    example: |
+      interface PaymentConfig {
+        method: 'credit_card' | 'bank_transfer';
+        apiKey?: string;
+        accountNumber?: string;
+      }
+
+      function createPaymentProcessor(config: PaymentConfig) {
+        switch (config.method) {
+          case 'credit_card':
+            if (!config.apiKey) throw new Error('API key required');
+            return new CreditCardProcessor(config.apiKey);
+          case 'bank_transfer':
+            if (!config.accountNumber) throw new Error('Account required');
+            return new BankTransferProcessor(config.accountNumber);
+          default:
+            throw new Error('Unknown payment method');
+        }
+      }
+    tags: [architecture, factory, creational, object-creation]
+
+  - id: ja-arch-004
+    name: Middlewareパイプライン
+    type: code
+    context: リクエスト処理の前後で共通処理を挿入したい場合
+    solution: ミドルウェアチェーンで処理をパイプライン化
+    example: |
+      type Middleware = (req: Request, next: () => Promise<Response>) => Promise<Response>;
+
+      async function applyMiddlewares(req: Request, middlewares: Middleware[]): Promise<Response> {
+        let index = 0;
+
+        const next = async (): Promise<Response> => {
+          if (index < middlewares.length) {
+            return middlewares[index++](req, next);
+          }
+          return new Response('OK');
+        };
+
+        return next();
+      }
+
+      // 使用
+      const logger: Middleware = async (req, next) => {
+        console.log(`${req.method} ${req.url}`);
+        return next();
+      };
+
+      const auth: Middleware = async (req, next) => {
+        if (!req.headers.get('Authorization')) {
+          return new Response('Unauthorized', { status: 401 });
+        }
+        return next();
+      };
+    tags: [architecture, middleware, pipeline, request-processing]
+
+  - id: ja-arch-005
+    name: Observer/EventEmitter
+    type: code
+    context: 状態変化を複数のコンポーネントに通知したい場合
+    solution: ObserverパターンまたはEventEmitterを使用
+    example: |
+      type Listener = (data: unknown) => void;
+
+      class EventEmitter {
+        private listeners: Map<string, Set<Listener>> = new Map();
+
+        on(event: string, listener: Listener): void {
+          if (!this.listeners.has(event)) {
+            this.listeners.set(event, new Set());
+          }
+          this.listeners.get(event)!.add(listener);
+        }
+
+        off(event: string, listener: Listener): void {
+          this.listeners.get(event)?.delete(listener);
+        }
+
+        emit(event: string, data: unknown): void {
+          this.listeners.get(event)?.forEach(listener => listener(data));
+        }
+      }
+
+      // 使用
+      const emitter = new EventEmitter();
+      emitter.on('user:created', (user) => {
+        console.log('User created:', user);
+      });
+      emitter.emit('user:created', { id: '1', name: 'Alice' });
+    tags: [architecture, observer, events, pubsub]
