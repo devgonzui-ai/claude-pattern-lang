@@ -1,6 +1,9 @@
 {
-  "name": "claude-pattern-lang",
+  "name": "@gonzui/claude-pattern-lang",
   "version": "1.0.0",
+  "publishConfig": {
+    "access": "public"
+  },
   "description": "CLI tool for automatically extracting and cataloging patterns from Claude Code session logs",
   "type": "module",
   "main": "dist/index.js",

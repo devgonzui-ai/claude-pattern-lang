@@ -1,8 +1,8 @@
-# claude-pattern-lang
+# @gonzui/claude-pattern-lang
 
-[![npm version](https://img.shields.io/npm/v/claude-pattern-lang)](https://www.npmjs.com/package/claude-pattern-lang)
-[![License: MIT](https://img.shields.io/npm/l/claude-pattern-lang)](LICENSE)
-[![Node: >=18.0.0](https://img.shields.io/node/v/claude-pattern-lang)](https://nodejs.org)
+[![npm version](https://img.shields.io/npm/v/@gonzui/claude-pattern-lang)](https://www.npmjs.com/package/@gonzui/claude-pattern-lang)
+[![License: MIT](https://img.shields.io/npm/l/@gonzui/claude-pattern-lang)](LICENSE)
+[![Node: >=18.0.0](https://img.shields.io/node/v/@gonzui/claude-pattern-lang)](https://nodejs.org)
 
 A CLI tool to automatically extract and catalog patterns from Claude Code session logs. It captures effective approaches as a pattern language that Claude can reference, enabling faster task completion and more consistent code quality in future sessions.
 
@@ -36,7 +36,7 @@ A CLI tool to automatically extract and catalog patterns from Claude Code sessio
 ### Global Install
 
 ```bash
-npm install -g claude-pattern-lang
+npm install -g @gonzui/claude-pattern-lang
 ```
 
 ### Local Install
