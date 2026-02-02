@@ -159,13 +159,13 @@ invalid json line
 
     it("should handle complex project paths", () => {
       const sessionPath =
-        "/home/testuser/.claude/projects/-home-naoki-work-claude-pattern-lang/session-xyz.jsonl";
+        "/home/testuser/.claude/projects/-home-testuser-work-my-project/session-xyz.jsonl";
 
       const info = getSessionInfo(sessionPath);
 
       expect(info).toEqual({
         id: "session-xyz",
-        project: "-home-naoki-work-claude-pattern-lang",
+        project: "-home-testuser-work-my-project",
         path: sessionPath,
       });
     });
