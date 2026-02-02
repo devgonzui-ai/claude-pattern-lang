@@ -1,4 +1,4 @@
-# @gonzui/claude-pattern-lang
+# claude-pattern-lang
 
 [![npm](https://img.shields.io/npm/v/@gonzui/claude-pattern-lang?label=npm&color=blue)](https://www.npmjs.com/package/@gonzui/claude-pattern-lang)
 [![License: MIT](https://img.shields.io/npm/l/@gonzui/claude-pattern-lang?label=license&color=blue)](LICENSE)
