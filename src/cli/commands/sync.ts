@@ -175,6 +175,9 @@ export async function syncAction(ids: string[], options: SyncOptions): Promise<v
     // CLAUDE.mdに@参照を書き込み
     await writeClaudeMd(claudeMdPath, newContent);
     success(t("messages.sync.synced", { path: claudeMdPath }));
+
+    // 再起動の案内を表示
+    info(t("messages.sync.restartHint"));
   } catch (err) {
     error(t("messages.sync.error", { error: stringifyError(err) }));
   }

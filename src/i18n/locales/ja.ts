@@ -157,6 +157,7 @@ export const ja: Messages = {
       saveConfirm: "変更を保存しますか?",
       cancelled: "同期をキャンセルしました。",
       synced: "{path} にパターンを同期しました。",
+      restartHint: "💡 変更を反映するにはClaude Codeを再起動してください。",
       error: "エラー: {error}",
     },
     config: {

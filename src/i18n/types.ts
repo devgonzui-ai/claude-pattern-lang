@@ -178,6 +178,7 @@ export interface CommandMessages {
     saveConfirm: string;
     cancelled: string;
     synced: string;
+    restartHint: string;
     error: string;
   };
   config: {

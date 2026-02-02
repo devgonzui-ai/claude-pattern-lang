@@ -157,6 +157,7 @@ export const en: Messages = {
       saveConfirm: "Save changes?",
       cancelled: "Sync cancelled.",
       synced: "Synced patterns to {path}.",
+      restartHint: "💡 Please restart Claude Code to apply the changes.",
       error: "Error: {error}",
     },
     config: {
