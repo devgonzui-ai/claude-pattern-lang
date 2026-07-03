@@ -26,6 +26,7 @@ Claude Codeのセッションログから自動的にパターンを抽出・カ
 - **自動パターン抽出**: LLMによるセッションログの分析
 - **パターンカタログ管理**: YAML形式での保存・整理
 - **CLAUDE.md同期**: Claudeのコンテキストに自動統合
+- **Claude Code Skillsエクスポート**: パターンをオンデマンド読み込みのSkillsとして出力し、コンテキストを節約
 - **Claude Codeフック連携**: セッションライフサイクルとシームレスに統合
 - **重複検出**: 自動重複排除とマージ
 - **プライバシー保護**: 機密情報の自動マスキング
@@ -145,6 +146,50 @@ cpl sync --global
    ```
 
 このアプローチにより、CLAUDE.mdがスッキリし、パターンを独立して管理できます。Claude Codeの `@` インポート機能がパターン内容を自動的に読み込みます。
+
+### Claude Code Skillsとしてエクスポート
+
+`patterns.md` 経由で全パターンをコンテキストに読み込む代わりに、パターンを [Claude Code Skills](https://docs.claude.com/en/docs/claude-code) としてエクスポートできます。Skillsはオンデマンドで読み込まれます — Claudeは各スキルのdescriptionを見て、関連する場合のみ本文を読み込むため、パターンカタログが大きくなってもコンテキストウィンドウを圧迫しません。
+
+```bash
+# 全パターンをSkillsとして現在のプロジェクトにエクスポート
+cpl export --skills
+
+# 特定のパターンのみエクスポート（IDは短縮可）
+cpl export <pattern-id> --skills
+
+# 特定プロジェクトにエクスポート
+cpl export --skills --project /path/to/project
+
+# 個人用スキル（~/.claude/skills）にエクスポート
+cpl export --skills --global
+
+# 生成内容をプレビュー（書き込みなし）
+cpl export --skills --dry-run
+
+# 確認なしで書き込み
+cpl export --skills --force
+```
+
+#### export の仕組み
+
+各パターンが `SKILL.md` を含むスキルディレクトリになります：
+
+```
+{project}/.claude/skills/
+└── <pattern-name>/
+    └── SKILL.md    # frontmatter (name, description) + パターン内容
+```
+
+スキルの `description` はパターンのcontext・problem・tagsから生成されるため、Claudeが読み込みタイミングを判断できます。
+
+**`sync` と `export` の使い分け:**
+
+| 観点 | `cpl sync` | `cpl export --skills` |
+|------|-----------|----------------------|
+| **読み込み** | 常にコンテキストに載る（`@patterns.md` 経由） | オンデマンド（Skills） |
+| **コンテキストコスト** | カタログサイズに比例して増加 | ほぼ一定（descriptionのみ） |
+| **向いている用途** | 小さいカタログ、常に適用したいルール | 大きいカタログ、状況依存のパターン |
 
 ### パターン管理
 

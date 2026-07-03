@@ -60,6 +60,17 @@ export const ja: Messages = {
           force: "確認なしで上書き",
         },
       },
+      export: {
+        description: "パターンをClaude Code Skillsとしてエクスポート",
+        argument: "エクスポートするパターンID（短縮可、省略時は全パターン）",
+        options: {
+          skills: "Claude Code Skills形式でエクスポート（デフォルト）",
+          project: "エクスポート先プロジェクト",
+          global: "~/.claude/skills にエクスポート",
+          dryRun: "生成内容のみ表示",
+          force: "確認なしで書き込み",
+        },
+      },
       config: {
         description: "設定を表示・変更する",
         options: {
@@ -158,6 +169,20 @@ export const ja: Messages = {
       cancelled: "同期をキャンセルしました。",
       synced: "{path} にパターンを同期しました。",
       restartHint: "💡 変更を反映するにはClaude Codeを再起動してください。",
+      error: "エラー: {error}",
+    },
+    export: {
+      emptyCatalog: "パターンカタログが空です。先に `cpl add` または `cpl analyze` でパターンを追加してください。",
+      patternNotFound: "パターン \"{id}\" が見つかりません。",
+      ambiguousId: "ID \"{identifier}\" は複数のパターンにマッチします:",
+      exportingPatterns: "{count}件のパターンをClaude Code Skillsとしてエクスポートします...",
+      changeHeader: "=== 生成されるスキル ===",
+      dryRun: "[dry-run] ファイルは書き込まれませんでした。",
+      saveConfirm: "{dir} に {count} 件のスキルファイルを書き込みますか?",
+      cancelled: "エクスポートをキャンセルしました。",
+      fileWritten: "{path} を書き込みました。",
+      exported: "{dir} に {count} 件のスキルをエクスポートしました。",
+      restartHint: "💡 新しいスキルを読み込むにはClaude Codeを再起動してください。",
       error: "エラー: {error}",
     },
     config: {

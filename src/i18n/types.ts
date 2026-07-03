@@ -77,6 +77,17 @@ export interface CliMessages {
         force: string;
       };
     };
+    export: {
+      description: string;
+      argument: string;
+      options: {
+        skills: string;
+        project: string;
+        global: string;
+        dryRun: string;
+        force: string;
+      };
+    };
     config: {
       description: string;
       options: {
@@ -178,6 +189,20 @@ export interface CommandMessages {
     saveConfirm: string;
     cancelled: string;
     synced: string;
+    restartHint: string;
+    error: string;
+  };
+  export: {
+    emptyCatalog: string;
+    patternNotFound: string;
+    ambiguousId: string;
+    exportingPatterns: string;
+    changeHeader: string;
+    dryRun: string;
+    saveConfirm: string;
+    cancelled: string;
+    fileWritten: string;
+    exported: string;
     restartHint: string;
     error: string;
   };

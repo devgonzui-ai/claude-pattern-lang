@@ -60,6 +60,17 @@ export const en: Messages = {
           force: "Overwrite without confirmation",
         },
       },
+      export: {
+        description: "Export patterns as Claude Code Skills",
+        argument: "Pattern IDs to export (can be shortened, all patterns if omitted)",
+        options: {
+          skills: "Export in Claude Code Skills format (default)",
+          project: "Target project for export",
+          global: "Export to ~/.claude/skills",
+          dryRun: "Display generated files only",
+          force: "Write without confirmation",
+        },
+      },
       config: {
         description: "Display or change settings",
         options: {
@@ -158,6 +169,20 @@ export const en: Messages = {
       cancelled: "Sync cancelled.",
       synced: "Synced patterns to {path}.",
       restartHint: "💡 Please restart Claude Code to apply the changes.",
+      error: "Error: {error}",
+    },
+    export: {
+      emptyCatalog: "Pattern catalog is empty. Add patterns with `cpl add` or `cpl analyze` first.",
+      patternNotFound: "Pattern \"{id}\" not found.",
+      ambiguousId: "ID \"{identifier}\" matches multiple patterns:",
+      exportingPatterns: "Exporting {count} pattern(s) as Claude Code Skills...",
+      changeHeader: "=== Generated Skills ===",
+      dryRun: "[dry-run] Files were not written.",
+      saveConfirm: "Write {count} skill file(s) to {dir}?",
+      cancelled: "Export cancelled.",
+      fileWritten: "Wrote {path}.",
+      exported: "Exported {count} skill(s) to {dir}.",
+      restartHint: "💡 Please restart Claude Code to load the new skills.",
       error: "Error: {error}",
     },
     config: {
