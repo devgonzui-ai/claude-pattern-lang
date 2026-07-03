@@ -26,6 +26,7 @@ A CLI tool to automatically extract and catalog patterns from Claude Code sessio
 - **Automatic Pattern Extraction**: LLM-powered analysis of session logs
 - **Pattern Catalog Management**: Store and organize patterns in YAML format
 - **CLAUDE.md Sync**: Automatically integrate patterns into Claude's context
+- **Claude Code Skills Export**: Export patterns as on-demand Skills to save context
 - **Claude Code Hooks**: Seamless integration with session lifecycle
 - **Duplicate Detection**: Automatic deduplication and merging
 - **Privacy Protection**: Automatic masking of sensitive information
@@ -145,6 +146,50 @@ The `sync` command creates two files:
    ```
 
 This approach keeps CLAUDE.md clean and allows patterns to be managed independently. Claude Code's `@` import feature automatically loads the pattern content.
+
+### Export as Claude Code Skills
+
+Export patterns as [Claude Code Skills](https://docs.claude.com/en/docs/claude-code) instead of loading them all into context via `patterns.md`. Skills are loaded on demand — Claude reads each skill's description and loads the full content only when relevant, keeping your context window lean even with a large pattern catalog.
+
+```bash
+# Export all patterns as Skills to the current project
+cpl export --skills
+
+# Export specific patterns only (ID can be shortened)
+cpl export <pattern-id> --skills
+
+# Export to a specific project
+cpl export --skills --project /path/to/project
+
+# Export to personal skills (~/.claude/skills)
+cpl export --skills --global
+
+# Preview generated files without writing
+cpl export --skills --dry-run
+
+# Write without confirmation
+cpl export --skills --force
+```
+
+#### How Export Works
+
+Each pattern becomes a skill directory containing a `SKILL.md`:
+
+```
+{project}/.claude/skills/
+└── <pattern-name>/
+    └── SKILL.md    # frontmatter (name, description) + pattern content
+```
+
+The skill's `description` is generated from the pattern's context, problem, and tags, so Claude can decide when to load it.
+
+**`sync` vs `export`:**
+
+| Aspect | `cpl sync` | `cpl export --skills` |
+|--------|-----------|----------------------|
+| **Loading** | Always in context (via `@patterns.md`) | On demand (Skills) |
+| **Context cost** | Grows with catalog size | Near-constant (descriptions only) |
+| **Best for** | Small catalogs, always-relevant rules | Large catalogs, situational patterns |
 
 ### Manage Patterns
 
