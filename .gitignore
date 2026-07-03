@@ -40,3 +40,6 @@ npm-debug.log*
 
 # Package
 *.tgz
+
+# Local roadmap memo
+ROADMAP.md
