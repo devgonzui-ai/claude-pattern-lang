@@ -31,7 +31,11 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      - name: Unit tests
+      # e2eテストはdist/index.jsを実行するため、テスト前にビルドが必要
+      - name: Build
+        run: npm run build
+
+      - name: Tests
         run: npm run test:run
 
       - name: Verify tag matches package.json version
