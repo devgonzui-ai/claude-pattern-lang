@@ -60,6 +60,8 @@ describe("hooks/installer", () => {
       expect(settings.hooks).toBeDefined();
       expect(settings.hooks.SessionEnd).toBeDefined();
       expect(settings.hooks.SessionEnd).toContain("cpl");
+      expect(settings.hooks.Stop).toBeDefined();
+      expect(settings.hooks.Stop).toContain("cpl");
     });
 
     it("settings.jsonが存在する場合、既存設定を保持しつつフック設定を追加する", async () => {
@@ -116,6 +118,8 @@ describe("hooks/installer", () => {
 
       // 既存のSessionEndフックが保持されている
       expect(settings.hooks.SessionEnd).toBe("existing-session-end-hook");
+      // Stopフックは追加されている
+      expect(settings.hooks.Stop).toContain("cpl");
     });
 
     it(".claudeディレクトリが存在しない場合、作成する", async () => {
@@ -132,11 +136,12 @@ describe("hooks/installer", () => {
   });
 
   describe("uninstallHooks", () => {
-    it("SessionEndフック設定を削除する", async () => {
+    it("SessionEnd/Stopフック設定を削除する", async () => {
       const existingSettings = {
         someKey: "value",
         hooks: {
           SessionEnd: "cpl _hook-session-end",
+          Stop: "cpl _hook-stop",
           OtherHook: "other-command",
         },
       };
@@ -147,11 +152,30 @@ describe("hooks/installer", () => {
       const content = await readFile(settingsPath, "utf-8");
       const settings = JSON.parse(content);
 
-      // SessionEndフックが削除されている
+      // cplのフックが削除されている
       expect(settings.hooks.SessionEnd).toBeUndefined();
+      expect(settings.hooks.Stop).toBeUndefined();
       // 他のフックと設定は保持されている
       expect(settings.hooks.OtherHook).toBe("other-command");
       expect(settings.someKey).toBe("value");
+    });
+
+    it("cpl以外のフックコマンドは削除しない", async () => {
+      const existingSettings = {
+        hooks: {
+          SessionEnd: "other-tool-command",
+          Stop: "cpl _hook-stop",
+        },
+      };
+      await writeFile(settingsPath, JSON.stringify(existingSettings, null, 2));
+
+      await uninstallHooks();
+
+      const content = await readFile(settingsPath, "utf-8");
+      const settings = JSON.parse(content);
+
+      expect(settings.hooks.SessionEnd).toBe("other-tool-command");
+      expect(settings.hooks.Stop).toBeUndefined();
     });
 
     it("settings.jsonが存在しない場合、何もしない", async () => {
