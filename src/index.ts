@@ -9,6 +9,7 @@ import {
   exportCommand,
   scoreCommand,
   pruneCommand,
+  dedupeCommand,
   addCommand,
   removeCommand,
   configCommand,
@@ -50,6 +51,7 @@ async function main(): Promise<void> {
   program.addCommand(exportCommand);
   program.addCommand(scoreCommand);
   program.addCommand(pruneCommand);
+  program.addCommand(dedupeCommand);
   program.addCommand(addCommand);
   program.addCommand(removeCommand);
   program.addCommand(configCommand);

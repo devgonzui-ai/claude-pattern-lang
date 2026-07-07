@@ -109,6 +109,15 @@ export interface CliMessages {
         force: string;
       };
     };
+    dedupe: {
+      description: string;
+      options: {
+        threshold: string;
+        limit: string;
+        dryRun: string;
+        force: string;
+      };
+    };
     config: {
       description: string;
       options: {
@@ -248,6 +257,29 @@ export interface CommandMessages {
     confirm: string;
     cancelled: string;
     pruned: string;
+    resyncHint: string;
+    error: string;
+  };
+  dedupe: {
+    notEnoughPatterns: string;
+    invalidThreshold: string;
+    invalidLimit: string;
+    scanning: string;
+    noCandidates: string;
+    candidates: string;
+    candidateItem: string;
+    judging: string;
+    noDuplicates: string;
+    duplicates: string;
+    proposal: string;
+    reason: string;
+    keep: string;
+    remove: string;
+    confirm: string;
+    skippedPair: string;
+    dryRun: string;
+    nothingMerged: string;
+    merged: string;
     resyncHint: string;
     error: string;
   };

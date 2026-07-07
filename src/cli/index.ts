@@ -6,6 +6,7 @@ export { syncCommand } from "./commands/sync.js";
 export { exportCommand } from "./commands/export.js";
 export { scoreCommand } from "./commands/score.js";
 export { pruneCommand } from "./commands/prune.js";
+export { dedupeCommand } from "./commands/dedupe.js";
 export { addCommand } from "./commands/add.js";
 export { removeCommand } from "./commands/remove.js";
 export { configCommand } from "./commands/config.js";

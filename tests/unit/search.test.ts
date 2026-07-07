@@ -1,6 +1,16 @@
-import { describe, it, expect } from "vitest";
-import { filterByType, searchByKeyword } from "../../src/core/catalog/search.js";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import {
+  filterByType,
+  searchByKeyword,
+  filterByTags,
+  searchPatterns,
+} from "../../src/core/catalog/search.js";
+import * as store from "../../src/core/catalog/store.js";
 import type { Pattern } from "../../src/types/index.js";
+
+vi.mock("../../src/core/catalog/store.js", () => ({
+  loadCatalog: vi.fn(),
+}));
 
 const createPattern = (
   overrides: Partial<Pattern> = {}
@@ -223,5 +233,109 @@ describe("searchByKeyword", () => {
 
       expect(result).toHaveLength(0);
     });
+  });
+});
+
+describe("filterByTags", () => {
+  it("いずれかのタグに一致するパターンを返す", () => {
+    const patterns: Pattern[] = [
+      createPattern({ id: "1", tags: ["react", "form"] }),
+      createPattern({ id: "2", tags: ["python"] }),
+      createPattern({ id: "3", tags: undefined }),
+    ];
+
+    const result = filterByTags(patterns, ["react", "vue"]);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe("1");
+  });
+
+  it("大文字小文字を区別しない", () => {
+    const patterns: Pattern[] = [
+      createPattern({ id: "1", tags: ["TypeScript"] }),
+    ];
+
+    const result = filterByTags(patterns, ["typescript"]);
+
+    expect(result).toHaveLength(1);
+  });
+
+  it("タグ指定が空なら全パターンを返す", () => {
+    const patterns: Pattern[] = [
+      createPattern({ id: "1" }),
+      createPattern({ id: "2" }),
+    ];
+
+    expect(filterByTags(patterns, [])).toHaveLength(2);
+  });
+});
+
+describe("searchPatterns", () => {
+  const catalogPatterns: Pattern[] = [
+    createPattern({
+      id: "1",
+      name: "ESMインポートパス解決",
+      type: "solution",
+      tags: ["esm", "typescript"],
+    }),
+    createPattern({
+      id: "2",
+      name: "react-form",
+      type: "code",
+      tags: ["react", "typescript"],
+    }),
+    createPattern({
+      id: "3",
+      name: "エラーログ先行確認",
+      type: "prompt",
+      tags: ["debug"],
+    }),
+  ];
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(store.loadCatalog).mockResolvedValue({ patterns: catalogPatterns });
+  });
+
+  it("条件なしなら全パターンを返す", async () => {
+    const result = await searchPatterns({});
+
+    expect(result).toHaveLength(3);
+  });
+
+  it("typeでフィルタできる", async () => {
+    const result = await searchPatterns({ type: "code" });
+
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe("2");
+  });
+
+  it("keywordで検索できる", async () => {
+    const result = await searchPatterns({ keyword: "エラーログ" });
+
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe("3");
+  });
+
+  it("tagsでフィルタできる", async () => {
+    const result = await searchPatterns({ tags: ["typescript"] });
+
+    expect(result).toHaveLength(2);
+  });
+
+  it("複数条件はAND結合される", async () => {
+    const result = await searchPatterns({
+      type: "solution",
+      tags: ["typescript"],
+    });
+
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe("1");
+  });
+
+  it("マッチしなければ空配列を返す", async () => {
+    const result = await searchPatterns({ type: "code", tags: ["debug"] });
+
+    expect(result).toHaveLength(0);
   });
 });
