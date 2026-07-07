@@ -148,4 +148,50 @@ describe("exportAction", () => {
     expect(logger.error).toHaveBeenCalledWith(expect.stringContaining("not found"));
     expect(fs.writeTextFile).not.toHaveBeenCalled();
   });
+
+  describe("--output（チーム共有YAML）", () => {
+    it("共有YAMLファイルとして書き込む（force）", async () => {
+      vi.mocked(store.loadCatalog).mockResolvedValue({ patterns: mockPatterns });
+
+      await exportAction([], {
+        output: "/tmp/team-patterns.yaml",
+        force: true,
+      });
+
+      expect(fs.writeTextFile).toHaveBeenCalledTimes(1);
+      const [path, content] = vi.mocked(fs.writeTextFile).mock.calls[0];
+      expect(path).toBe("/tmp/team-patterns.yaml");
+      expect(content).toContain("test-pattern");
+      expect(content).toContain("another-pattern");
+      expect(content).toContain("version:");
+      // ローカル固有の情報は含めない
+      expect(content).not.toContain("created_at");
+    });
+
+    it("dry-runでは書き込まない", async () => {
+      vi.mocked(store.loadCatalog).mockResolvedValue({ patterns: mockPatterns });
+
+      await exportAction([], {
+        output: "/tmp/team-patterns.yaml",
+        dryRun: true,
+      });
+
+      expect(fs.writeTextFile).not.toHaveBeenCalled();
+      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("dry-run"));
+    });
+
+    it("ID指定で該当パターンのみ書き込む", async () => {
+      vi.mocked(store.loadCatalog).mockResolvedValue({ patterns: mockPatterns });
+      vi.mocked(store.getPatternByIdentifier).mockResolvedValue(mockPatterns[1]);
+
+      await exportAction(["2"], {
+        output: "/tmp/team-patterns.yaml",
+        force: true,
+      });
+
+      const [, content] = vi.mocked(fs.writeTextFile).mock.calls[0];
+      expect(content).toContain("another-pattern");
+      expect(content).not.toContain("test-pattern");
+    });
+  });
 });

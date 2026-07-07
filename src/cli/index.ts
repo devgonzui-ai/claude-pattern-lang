@@ -4,6 +4,7 @@ export { listCommand } from "./commands/list.js";
 export { showCommand } from "./commands/show.js";
 export { syncCommand } from "./commands/sync.js";
 export { exportCommand } from "./commands/export.js";
+export { importCommand } from "./commands/import.js";
 export { scoreCommand } from "./commands/score.js";
 export { pruneCommand } from "./commands/prune.js";
 export { dedupeCommand } from "./commands/dedupe.js";

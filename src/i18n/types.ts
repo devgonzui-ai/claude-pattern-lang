@@ -82,8 +82,18 @@ export interface CliMessages {
       argument: string;
       options: {
         skills: string;
+        output: string;
         project: string;
         global: string;
+        dryRun: string;
+        force: string;
+      };
+    };
+    import: {
+      description: string;
+      argument: string;
+      options: {
+        overwrite: string;
         dryRun: string;
         force: string;
       };
@@ -234,6 +244,29 @@ export interface CommandMessages {
     fileWritten: string;
     exported: string;
     restartHint: string;
+    exportingFile: string;
+    fileConfirm: string;
+    exportedFile: string;
+    importHint: string;
+    error: string;
+  };
+  import: {
+    fetching: string;
+    fetchError: string;
+    sourceNotFound: string;
+    parseError: string;
+    invalidSkipped: string;
+    noPatterns: string;
+    summary: string;
+    newItem: string;
+    overwriteItem: string;
+    skipItem: string;
+    nothingToImport: string;
+    dryRun: string;
+    confirm: string;
+    cancelled: string;
+    imported: string;
+    resyncHint: string;
     error: string;
   };
   score: {
