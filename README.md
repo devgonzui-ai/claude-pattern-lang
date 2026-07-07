@@ -32,8 +32,7 @@ A CLI tool to automatically extract and catalog patterns from Claude Code sessio
 - **Duplicate Detection**: Automatic deduplication and merging
 - **Privacy Protection**: Automatic masking of sensitive information
 - **Incremental Analysis**: Only analyze new sessions since last run
-- **Multi-LLM Support**: Claude Code
-  - *Other providers (Anthropic, OpenAI, Gemini, Ollama, DeepSeek) are available for future releases*
+- **Multi-LLM Support**: Claude Code (default, no API key required), Anthropic, OpenAI, Gemini, Ollama, DeepSeek
 
 ## Installation
 
@@ -228,6 +227,59 @@ cpl prune --force
 
 After pruning, run `cpl sync` / `cpl export` to update the synced files.
 
+### Deduplicate Similar Patterns
+
+Detect semantically similar patterns and merge them with LLM assistance:
+
+```bash
+# Preview merge proposals
+cpl dedupe --dry-run
+
+# Merge interactively (confirm each pair)
+cpl dedupe
+
+# Merge all judged duplicates without confirmation
+cpl dedupe --force
+
+# Tune candidate detection
+cpl dedupe --threshold 0.5 --limit 5
+```
+
+Candidate pairs are first filtered by lexical similarity, then the configured LLM judges whether each pair is a true semantic duplicate and proposes a merged pattern.
+
+### Share Patterns with Your Team
+
+Export patterns to a portable YAML file and import them on another machine:
+
+```bash
+# Export all patterns (or specific IDs) to a shareable file
+cpl export --output team-patterns.yaml
+cpl export a1b2c3d4 --output team-patterns.yaml
+
+# Import from a file or URL
+cpl import team-patterns.yaml
+cpl import https://example.com/team-patterns.yaml
+
+# Preview / update existing same-name patterns
+cpl import team-patterns.yaml --dry-run
+cpl import team-patterns.yaml --overwrite
+```
+
+Shared files contain only the pattern content (no local IDs, timestamps or usage stats). On import, patterns with an existing name are skipped unless `--overwrite` is given.
+
+### Automatic Analysis (Hooks)
+
+With Claude Code hooks installed, cpl can run the whole loop automatically. Enable it in `~/.claude-patterns/config.yaml`:
+
+```yaml
+analysis:
+  auto_analyze: true
+sync:
+  auto_sync: true  # optional: auto-sync extracted patterns to CLAUDE.md
+```
+
+The `SessionEnd` hook queues finished sessions, and the `Stop` hook analyzes queued sessions in the background (up to 3 per run) and syncs the results.
+
 ### Manage Patterns
 
 Manually add or remove patterns:
@@ -335,13 +387,14 @@ The configuration file is located at `~/.claude-patterns/config.yaml`:
 version: 1
 
 llm:
-  # LLM provider: claude-code
-  # (Other providers available for future releases)
+  # LLM provider: claude-code | anthropic | openai | gemini | ollama | deepseek
   provider: claude-code
   # Model to use
   model: claude-opus-4-20250514
-  # API key environment variable (not needed for claude-code)
+  # API key environment variable (not needed for claude-code / ollama)
   api_key_env: ""
+  # Custom endpoint (for ollama etc.)
+  # base_url: http://localhost:11434
 
 analysis:
   # Auto-analyze on session end
@@ -357,6 +410,21 @@ sync:
   # Target projects for sync (glob)
   target_projects: []
 ```
+
+### Supported LLM Providers
+
+Switch providers interactively with `cpl config --provider`, or edit `config.yaml` directly:
+
+| Provider | Default model | API key env var | Notes |
+|----------|---------------|-----------------|-------|
+| `claude-code` | `claude-code` | (not required) | Default. Uses your local Claude Code CLI |
+| `anthropic` | `claude-sonnet-4-20250514` | `ANTHROPIC_API_KEY` | |
+| `openai` | `gpt-4o` | `OPENAI_API_KEY` | `base_url` for OpenAI-compatible endpoints |
+| `gemini` | `gemini-2.0-flash` | `GEMINI_API_KEY` | |
+| `ollama` | `llama3.1` | (not required) | Local models. `base_url` defaults to `http://localhost:11434` |
+| `deepseek` | `deepseek-chat` | `DEEPSEEK_API_KEY` | |
+
+If the configured provider's API key is missing, cpl automatically falls back to Claude Code (disable with `CPL_DISABLE_FALLBACK=1`).
 
 ## Directory Structure
 

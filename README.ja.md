@@ -32,8 +32,7 @@ Claude Codeのセッションログから自動的にパターンを抽出・カ
 - **重複検出**: 自動重複排除とマージ
 - **プライバシー保護**: 機密情報の自動マスキング
 - **増分解析**: 前回解析以降の新しいセッションのみを対象に処理
-- **マルチLLM対応**: Claude Code
-  - *他のプロバイダ（Anthropic, OpenAI, Gemini, Ollama, DeepSeek）は将来のリリースで対応予定*
+- **マルチLLM対応**: Claude Code（デフォルト・APIキー不要）、Anthropic、OpenAI、Gemini、Ollama、DeepSeek
 
 ## インストール
 
@@ -228,6 +227,59 @@ cpl prune --force
 
 整理後は `cpl sync` / `cpl export` を実行して同期済みファイルを更新してください。
 
+### 類似パターンの統合
+
+意味的に類似したパターンをLLMの支援で検出・統合できます：
+
+```bash
+# 統合提案をプレビュー
+cpl dedupe --dry-run
+
+# インタラクティブに統合（ペアごとに確認）
+cpl dedupe
+
+# 重複と判定された全ペアを確認なしで統合
+cpl dedupe --force
+
+# 候補検出のチューニング
+cpl dedupe --threshold 0.5 --limit 5
+```
+
+まず字句類似度で候補ペアを絞り込み、設定されたLLMが意味的な重複かどうかを判定して統合パターンを提案します。
+
+### チームでパターンを共有
+
+パターンをポータブルなYAMLファイルとしてエクスポートし、別のマシンでインポートできます：
+
+```bash
+# 全パターン（またはID指定）を共有ファイルにエクスポート
+cpl export --output team-patterns.yaml
+cpl export a1b2c3d4 --output team-patterns.yaml
+
+# ファイルまたはURLからインポート
+cpl import team-patterns.yaml
+cpl import https://example.com/team-patterns.yaml
+
+# プレビュー / 同名の既存パターンを上書き更新
+cpl import team-patterns.yaml --dry-run
+cpl import team-patterns.yaml --overwrite
+```
+
+共有ファイルにはパターンの内容のみが含まれます（ローカルのID・タイムスタンプ・使用実績は含まれません）。インポート時、同名の既存パターンは `--overwrite` を指定しない限りスキップされます。
+
+### 自動解析（フック連携）
+
+Claude Codeフックをインストールすると、抽出〜同期のループを自動化できます。`~/.claude-patterns/config.yaml` で有効化してください：
+
+```yaml
+analysis:
+  auto_analyze: true
+sync:
+  auto_sync: true  # 任意: 抽出したパターンをCLAUDE.mdへ自動同期
+```
+
+`SessionEnd` フックが終了したセッションをキューに追加し、`Stop` フックがキューのセッションをバックグラウンドで解析（1回あたり最大3件）して結果を同期します。
+
 ### パターン管理
 
 パターンを手動で追加・削除します：
@@ -335,13 +387,14 @@ cpl metrics --clear
 version: 1
 
 llm:
-  # LLMプロバイダ: claude-code
-  # (他のプロバイダは将来のリリースで対応予定)
+  # LLMプロバイダ: claude-code | anthropic | openai | gemini | ollama | deepseek
   provider: claude-code
   # 使用するモデル
   model: claude-opus-4-20250514
-  # APIキーの環境変数名 (claude-codeは不要)
+  # APIキーの環境変数名 (claude-code / ollamaは不要)
   api_key_env: ""
+  # カスタムエンドポイント (ollama等で使用)
+  # base_url: http://localhost:11434
 
 analysis:
   # セッション終了時に自動解析
@@ -357,6 +410,21 @@ sync:
   # 同期対象プロジェクト (glob)
   target_projects: []
 ```
+
+### 対応LLMプロバイダ
+
+`cpl config --provider` でインタラクティブに切り替えるか、`config.yaml` を直接編集してください：
+
+| プロバイダ | デフォルトモデル | APIキー環境変数 | 備考 |
+|-----------|----------------|----------------|------|
+| `claude-code` | `claude-code` | （不要） | デフォルト。ローカルのClaude Code CLIを使用 |
+| `anthropic` | `claude-sonnet-4-20250514` | `ANTHROPIC_API_KEY` | |
+| `openai` | `gpt-4o` | `OPENAI_API_KEY` | OpenAI互換エンドポイントは `base_url` で指定 |
+| `gemini` | `gemini-2.0-flash` | `GEMINI_API_KEY` | |
+| `ollama` | `llama3.1` | （不要） | ローカルモデル。`base_url` のデフォルトは `http://localhost:11434` |
+| `deepseek` | `deepseek-chat` | `DEEPSEEK_API_KEY` | |
+
+設定したプロバイダのAPIキーが未設定の場合、自動的にClaude Codeへフォールバックします（`CPL_DISABLE_FALLBACK=1` で無効化）。
 
 ## ディレクトリ構成
 
