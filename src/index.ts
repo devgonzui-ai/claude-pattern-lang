@@ -7,6 +7,8 @@ import {
   showCommand,
   syncCommand,
   exportCommand,
+  scoreCommand,
+  pruneCommand,
   addCommand,
   removeCommand,
   configCommand,
@@ -46,6 +48,8 @@ async function main(): Promise<void> {
   program.addCommand(showCommand);
   program.addCommand(syncCommand);
   program.addCommand(exportCommand);
+  program.addCommand(scoreCommand);
+  program.addCommand(pruneCommand);
   program.addCommand(addCommand);
   program.addCommand(removeCommand);
   program.addCommand(configCommand);

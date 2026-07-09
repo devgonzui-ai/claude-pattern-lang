@@ -71,6 +71,27 @@ export const en: Messages = {
           force: "Write without confirmation",
         },
       },
+      score: {
+        description: "Measure pattern usage from Claude Code session logs",
+        options: {
+          project: "Scan sessions of a specific project (default: current directory)",
+          all: "Scan sessions of all projects",
+          since: "Scan sessions since the specified date (YYYY-MM-DD)",
+          json: "Output in JSON format",
+          save: "Persist usage counts to the pattern catalog",
+        },
+      },
+      prune: {
+        description: "Remove patterns that are not used in session logs",
+        options: {
+          project: "Scan sessions of a specific project (default: current directory)",
+          all: "Scan sessions of all projects",
+          since: "Scan sessions since the specified date (YYYY-MM-DD)",
+          minUses: "Prune patterns used fewer than <n> times (default: 1)",
+          dryRun: "Display prune candidates only",
+          force: "Remove without confirmation",
+        },
+      },
       config: {
         description: "Display or change settings",
         options: {
@@ -183,6 +204,30 @@ export const en: Messages = {
       fileWritten: "Wrote {path}.",
       exported: "Exported {count} skill(s) to {dir}.",
       restartHint: "💡 Please restart Claude Code to load the new skills.",
+      error: "Error: {error}",
+    },
+    score: {
+      emptyCatalog: "Pattern catalog is empty. Add patterns with `cpl add` or `cpl analyze` first.",
+      noSessions: "No sessions found to scan. Try --all or --project <path>.",
+      scanning: "Scanning {sessions} session(s) for {patterns} pattern(s)...",
+      summary: "{total} pattern(s) total, {unused} never used.",
+      pruneHint: "💡 Run `cpl prune --dry-run` to review unused patterns.",
+      saved: "Saved usage counts to the pattern catalog.",
+      error: "Error: {error}",
+    },
+    prune: {
+      emptyCatalog: "Pattern catalog is empty. Nothing to prune.",
+      noSessions: "No sessions found to scan. Try --all or --project <path>.",
+      invalidMinUses: "--min-uses must be a positive integer.",
+      scanning: "Scanning {sessions} session(s) for {patterns} pattern(s)...",
+      nothingToPrune: "No patterns with fewer than {minUses} use(s). Nothing to prune.",
+      candidates: "{count} pattern(s) used fewer than {minUses} time(s):",
+      candidateItem: "  {shortId}...  {name} (uses: {uses})",
+      dryRun: "[dry-run] Patterns were not removed.",
+      confirm: "Remove these {count} pattern(s) from the catalog?",
+      cancelled: "Prune cancelled.",
+      pruned: "Removed {count} pattern(s) from the catalog.",
+      resyncHint: "💡 Run `cpl sync` / `cpl export` to update synced files.",
       error: "Error: {error}",
     },
     config: {

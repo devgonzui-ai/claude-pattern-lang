@@ -88,6 +88,27 @@ export interface CliMessages {
         force: string;
       };
     };
+    score: {
+      description: string;
+      options: {
+        project: string;
+        all: string;
+        since: string;
+        json: string;
+        save: string;
+      };
+    };
+    prune: {
+      description: string;
+      options: {
+        project: string;
+        all: string;
+        since: string;
+        minUses: string;
+        dryRun: string;
+        force: string;
+      };
+    };
     config: {
       description: string;
       options: {
@@ -204,6 +225,30 @@ export interface CommandMessages {
     fileWritten: string;
     exported: string;
     restartHint: string;
+    error: string;
+  };
+  score: {
+    emptyCatalog: string;
+    noSessions: string;
+    scanning: string;
+    summary: string;
+    pruneHint: string;
+    saved: string;
+    error: string;
+  };
+  prune: {
+    emptyCatalog: string;
+    noSessions: string;
+    invalidMinUses: string;
+    scanning: string;
+    nothingToPrune: string;
+    candidates: string;
+    candidateItem: string;
+    dryRun: string;
+    confirm: string;
+    cancelled: string;
+    pruned: string;
+    resyncHint: string;
     error: string;
   };
   config: {

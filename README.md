@@ -27,6 +27,7 @@ A CLI tool to automatically extract and catalog patterns from Claude Code sessio
 - **Pattern Catalog Management**: Store and organize patterns in YAML format
 - **CLAUDE.md Sync**: Automatically integrate patterns into Claude's context
 - **Claude Code Skills Export**: Export patterns as on-demand Skills to save context
+- **Usage Scoring & Pruning**: Measure which patterns are actually used and clean up unused ones
 - **Claude Code Hooks**: Seamless integration with session lifecycle
 - **Duplicate Detection**: Automatic deduplication and merging
 - **Privacy Protection**: Automatic masking of sensitive information
@@ -190,6 +191,42 @@ The skill's `description` is generated from the pattern's context, problem, and 
 | **Loading** | Always in context (via `@patterns.md`) | On demand (Skills) |
 | **Context cost** | Grows with catalog size | Near-constant (descriptions only) |
 | **Best for** | Small catalogs, always-relevant rules | Large catalogs, situational patterns |
+
+### Measure Pattern Usage
+
+Scan your Claude Code session logs to see which patterns are actually mentioned in conversations:
+
+```bash
+# Score patterns against current project's sessions
+cpl score
+
+# Scan all projects / since a date
+cpl score --all
+cpl score --since 2026-01-01
+
+# Output as JSON / persist usage counts to the catalog
+cpl score --json
+cpl score --save
+```
+
+The scan counts pattern-name mentions in user and assistant messages only. Tool outputs and `<system-reminder>` blocks are excluded, so reading `patterns.md` itself doesn't inflate the counts.
+
+### Prune Unused Patterns
+
+Remove patterns that never appear in your sessions:
+
+```bash
+# Preview prune candidates
+cpl prune --dry-run
+
+# Remove patterns used fewer than 3 times
+cpl prune --min-uses 3
+
+# Remove without confirmation
+cpl prune --force
+```
+
+After pruning, run `cpl sync` / `cpl export` to update the synced files.
 
 ### Manage Patterns
 

@@ -71,6 +71,27 @@ export const ja: Messages = {
           force: "確認なしで書き込み",
         },
       },
+      score: {
+        description: "Claude Codeセッションログからパターンの使用状況を測定",
+        options: {
+          project: "特定プロジェクトのセッションを走査（デフォルト: カレントディレクトリ）",
+          all: "全プロジェクトのセッションを走査",
+          since: "指定日以降のセッションを走査（YYYY-MM-DD）",
+          json: "JSON形式で出力",
+          save: "使用回数をパターンカタログに保存",
+        },
+      },
+      prune: {
+        description: "セッションログで使われていないパターンを削除",
+        options: {
+          project: "特定プロジェクトのセッションを走査（デフォルト: カレントディレクトリ）",
+          all: "全プロジェクトのセッションを走査",
+          since: "指定日以降のセッションを走査（YYYY-MM-DD）",
+          minUses: "使用回数が <n> 回未満のパターンを削除（デフォルト: 1）",
+          dryRun: "削除候補のみ表示",
+          force: "確認なしで削除",
+        },
+      },
       config: {
         description: "設定を表示・変更する",
         options: {
@@ -183,6 +204,30 @@ export const ja: Messages = {
       fileWritten: "{path} を書き込みました。",
       exported: "{dir} に {count} 件のスキルをエクスポートしました。",
       restartHint: "💡 新しいスキルを読み込むにはClaude Codeを再起動してください。",
+      error: "エラー: {error}",
+    },
+    score: {
+      emptyCatalog: "パターンカタログが空です。先に `cpl add` または `cpl analyze` でパターンを追加してください。",
+      noSessions: "走査対象のセッションが見つかりません。--all または --project <path> を試してください。",
+      scanning: "{sessions} 件のセッションから {patterns} 件のパターンの使用状況を走査します...",
+      summary: "全 {total} 件のパターン中、{unused} 件が未使用です。",
+      pruneHint: "💡 `cpl prune --dry-run` で未使用パターンを確認できます。",
+      saved: "使用回数をパターンカタログに保存しました。",
+      error: "エラー: {error}",
+    },
+    prune: {
+      emptyCatalog: "パターンカタログが空です。削除対象がありません。",
+      noSessions: "走査対象のセッションが見つかりません。--all または --project <path> を試してください。",
+      invalidMinUses: "--min-uses は正の整数を指定してください。",
+      scanning: "{sessions} 件のセッションから {patterns} 件のパターンの使用状況を走査します...",
+      nothingToPrune: "使用回数 {minUses} 回未満のパターンはありません。削除対象なしです。",
+      candidates: "使用回数 {minUses} 回未満のパターンが {count} 件あります:",
+      candidateItem: "  {shortId}...  {name} (使用回数: {uses})",
+      dryRun: "[dry-run] パターンは削除されませんでした。",
+      confirm: "これら {count} 件のパターンをカタログから削除しますか?",
+      cancelled: "削除をキャンセルしました。",
+      pruned: "{count} 件のパターンをカタログから削除しました。",
+      resyncHint: "💡 同期済みファイルを更新するには `cpl sync` / `cpl export` を実行してください。",
       error: "エラー: {error}",
     },
     config: {
