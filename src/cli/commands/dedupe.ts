@@ -50,7 +50,7 @@ async function confirm(message: string): Promise<boolean> {
 /**
  * ペアの表示用ラベルを生成する
  */
-function pairLabel(pair: SimilarPair): Record<string, unknown> {
+function pairLabel(pair: SimilarPair): Record<string, string | number> {
   return {
     shortIdA: pair.a.id.slice(0, 8),
     nameA: pair.a.name,
