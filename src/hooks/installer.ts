@@ -8,6 +8,11 @@ import { readFile, writeFile, mkdir } from "node:fs/promises";
 const SESSION_END_HOOK_COMMAND = "cpl _hook-session-end";
 
 /**
+ * Stopフックで実行するコマンド（auto_analyze用）
+ */
+const STOP_HOOK_COMMAND = "cpl _hook-stop";
+
+/**
  * Claude Code設定ファイルのパスを取得
  */
 export function getClaudeSettingsPath(): string {
@@ -51,13 +56,20 @@ export async function installHooks(): Promise<void> {
 
   const hooks = settings.hooks as Record<string, unknown>;
 
-  // SessionEndフックが既に存在する場合は上書きしない
-  if (hooks.SessionEnd) {
-    return;
+  // 既に存在するフックは上書きしない
+  let changed = false;
+  if (!hooks.SessionEnd) {
+    hooks.SessionEnd = SESSION_END_HOOK_COMMAND;
+    changed = true;
+  }
+  if (!hooks.Stop) {
+    hooks.Stop = STOP_HOOK_COMMAND;
+    changed = true;
   }
 
-  // SessionEndフックを追加
-  hooks.SessionEnd = SESSION_END_HOOK_COMMAND;
+  if (!changed) {
+    return;
+  }
 
   await writeSettings(settings);
 }
@@ -75,8 +87,13 @@ export async function uninstallHooks(): Promise<void> {
 
   const hooks = settings.hooks as Record<string, unknown>;
 
-  // SessionEndフックを削除
-  delete hooks.SessionEnd;
+  // cplのフックを削除（cpl以外のコマンドが設定されている場合は保持）
+  if (typeof hooks.SessionEnd === "string" && hooks.SessionEnd.includes("cpl")) {
+    delete hooks.SessionEnd;
+  }
+  if (typeof hooks.Stop === "string" && hooks.Stop.includes("cpl")) {
+    delete hooks.Stop;
+  }
 
   // hooksが空になったらhooksキー自体を削除
   if (Object.keys(hooks).length === 0) {

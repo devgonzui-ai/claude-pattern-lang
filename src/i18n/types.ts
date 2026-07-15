@@ -82,8 +82,18 @@ export interface CliMessages {
       argument: string;
       options: {
         skills: string;
+        output: string;
         project: string;
         global: string;
+        dryRun: string;
+        force: string;
+      };
+    };
+    import: {
+      description: string;
+      argument: string;
+      options: {
+        overwrite: string;
         dryRun: string;
         force: string;
       };
@@ -105,6 +115,15 @@ export interface CliMessages {
         all: string;
         since: string;
         minUses: string;
+        dryRun: string;
+        force: string;
+      };
+    };
+    dedupe: {
+      description: string;
+      options: {
+        threshold: string;
+        limit: string;
         dryRun: string;
         force: string;
       };
@@ -225,6 +244,29 @@ export interface CommandMessages {
     fileWritten: string;
     exported: string;
     restartHint: string;
+    exportingFile: string;
+    fileConfirm: string;
+    exportedFile: string;
+    importHint: string;
+    error: string;
+  };
+  import: {
+    fetching: string;
+    fetchError: string;
+    sourceNotFound: string;
+    parseError: string;
+    invalidSkipped: string;
+    noPatterns: string;
+    summary: string;
+    newItem: string;
+    overwriteItem: string;
+    skipItem: string;
+    nothingToImport: string;
+    dryRun: string;
+    confirm: string;
+    cancelled: string;
+    imported: string;
+    resyncHint: string;
     error: string;
   };
   score: {
@@ -248,6 +290,29 @@ export interface CommandMessages {
     confirm: string;
     cancelled: string;
     pruned: string;
+    resyncHint: string;
+    error: string;
+  };
+  dedupe: {
+    notEnoughPatterns: string;
+    invalidThreshold: string;
+    invalidLimit: string;
+    scanning: string;
+    noCandidates: string;
+    candidates: string;
+    candidateItem: string;
+    judging: string;
+    noDuplicates: string;
+    duplicates: string;
+    proposal: string;
+    reason: string;
+    keep: string;
+    remove: string;
+    confirm: string;
+    skippedPair: string;
+    dryRun: string;
+    nothingMerged: string;
+    merged: string;
     resyncHint: string;
     error: string;
   };

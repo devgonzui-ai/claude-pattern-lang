@@ -8,6 +8,7 @@ import { createLLMClient } from "../../llm/client.js";
 import { buildExtractPrompt, parseExtractResponse } from "../../llm/prompts/extract-patterns.js";
 import { sanitize } from "../../utils/sanitizer.js";
 import { MetricsCollector } from "../../llm/metrics/collector.js";
+import { findDuplicates } from "./deduplicator.js";
 
 /**
  * ツール結果の最大表示文字数
@@ -103,11 +104,21 @@ export async function extractPatterns(
   // レスポンスをパース
   const extractedPatterns = parseExtractResponse(response);
 
-  // 重複を除外
+  // 重複を除外（名前の完全一致）
   const duplicates = findDuplicatePatterns(extractedPatterns, existingPatterns);
   const duplicateNames = new Set(duplicates.map((p) => p.name.toLowerCase()));
 
-  return extractedPatterns.filter(
+  const nameFiltered = extractedPatterns.filter(
     (p) => !duplicateNames.has(p.name.toLowerCase())
+  );
+
+  // 名前が違ってもほぼ同一の内容なら除外（字句類似度ベース）
+  const nearDuplicates = findDuplicates(nameFiltered, existingPatterns);
+  const nearDuplicateNames = new Set(
+    nearDuplicates.map((p) => p.name.toLowerCase())
+  );
+
+  return nameFiltered.filter(
+    (p) => !nearDuplicateNames.has(p.name.toLowerCase())
   );
 }

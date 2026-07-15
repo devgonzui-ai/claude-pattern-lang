@@ -1,4 +1,5 @@
 import type { Pattern, PatternType } from "../../types/index.js";
+import { loadCatalog } from "./store.js";
 
 /**
  * 検索オプション
@@ -41,11 +42,39 @@ export function searchByKeyword(patterns: Pattern[], keyword: string): Pattern[]
 }
 
 /**
- * パターンを検索する
+ * パターンをタグでフィルタする（いずれかのタグに一致、大文字小文字を区別しない）
+ */
+export function filterByTags(patterns: Pattern[], tags: string[]): Pattern[] {
+  if (tags.length === 0) {
+    return patterns;
+  }
+
+  const wanted = tags.map((tag) => tag.toLowerCase());
+
+  return patterns.filter((p) =>
+    p.tags?.some((tag) => wanted.includes(tag.toLowerCase())) ?? false
+  );
+}
+
+/**
+ * カタログからパターンを検索する
+ * type / keyword / tags の各条件をAND結合で適用する
  */
 export async function searchPatterns(
-  _options: SearchOptions
+  options: SearchOptions
 ): Promise<Pattern[]> {
-  // TODO: 実装
-  return [];
+  const catalog = await loadCatalog();
+  let patterns = catalog.patterns;
+
+  if (options.type) {
+    patterns = filterByType(patterns, options.type);
+  }
+  if (options.keyword) {
+    patterns = searchByKeyword(patterns, options.keyword);
+  }
+  if (options.tags && options.tags.length > 0) {
+    patterns = filterByTags(patterns, options.tags);
+  }
+
+  return patterns;
 }

@@ -1,4 +1,4 @@
-import { program } from "commander";
+import { program, Command } from "commander";
 import { readFileSync } from "node:fs";
 import {
   initCommand,
@@ -7,8 +7,10 @@ import {
   showCommand,
   syncCommand,
   exportCommand,
+  importCommand,
   scoreCommand,
   pruneCommand,
+  dedupeCommand,
   addCommand,
   removeCommand,
   configCommand,
@@ -16,6 +18,8 @@ import {
   createCommand,
   sessionCommand,
 } from "./cli/index.js";
+import { handleSessionEnd } from "./cli/hooks/session-end.js";
+import { handleStop } from "./cli/hooks/stop.js";
 import { initI18n, t } from "./i18n/index.js";
 
 /**
@@ -48,14 +52,30 @@ async function main(): Promise<void> {
   program.addCommand(showCommand);
   program.addCommand(syncCommand);
   program.addCommand(exportCommand);
+  program.addCommand(importCommand);
   program.addCommand(scoreCommand);
   program.addCommand(pruneCommand);
+  program.addCommand(dedupeCommand);
   program.addCommand(addCommand);
   program.addCommand(removeCommand);
   program.addCommand(configCommand);
   program.addCommand(metricsCommand);
   program.addCommand(createCommand);
   program.addCommand(sessionCommand);
+
+  // Claude Codeフックから呼ばれる内部コマンド（ヘルプには表示しない）
+  program.addCommand(
+    new Command("_hook-session-end")
+      .description("(internal) SessionEnd hook handler")
+      .action(handleSessionEnd),
+    { hidden: true }
+  );
+  program.addCommand(
+    new Command("_hook-stop")
+      .description("(internal) Stop hook handler")
+      .action(handleStop),
+    { hidden: true }
+  );
 
   program.parse();
 }

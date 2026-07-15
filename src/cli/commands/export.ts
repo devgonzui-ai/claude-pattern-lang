@@ -2,6 +2,7 @@ import { Command } from "commander";
 import { loadCatalog, getPatternByIdentifier, AmbiguousIdentifierError } from "../../core/catalog/store.js";
 import type { Pattern } from "../../types/index.js";
 import { getSkillsDir, buildSkillFiles } from "../../core/sync/skills.js";
+import { serializePatterns } from "../../core/catalog/share.js";
 import { writeTextFile } from "../../utils/fs.js";
 import { info, success, warn, error, stringifyError } from "../../utils/logger.js";
 import * as readline from "node:readline";
@@ -9,6 +10,7 @@ import { t } from "../../i18n/index.js";
 
 interface ExportOptions {
   skills?: boolean;
+  output?: string;
   project?: string;
   global?: boolean;
   dryRun?: boolean;
@@ -74,6 +76,12 @@ export async function exportAction(ids: string[], options: ExportOptions): Promi
       patternsToExport = catalog.patterns;
     }
 
+    // --output指定時はチーム共有用YAMLファイルとしてエクスポート
+    if (options.output) {
+      await exportToFile(patternsToExport, options);
+      return;
+    }
+
     // 出力先とスキルファイルを決定
     const skillsDir = getSkillsDir(options);
     const skillFiles = buildSkillFiles(patternsToExport, skillsDir);
@@ -121,12 +129,48 @@ export async function exportAction(ids: string[], options: ExportOptions): Promi
 }
 
 /**
- * Claude Code Skillsエクスポートコマンド
+ * チーム共有用YAMLファイルへエクスポートする
+ */
+async function exportToFile(
+  patterns: Pattern[],
+  options: ExportOptions
+): Promise<void> {
+  const outputPath = options.output!;
+  const content = serializePatterns(patterns);
+
+  info(t("messages.export.exportingFile", { count: patterns.length, path: outputPath }));
+
+  // dry-runの場合は内容表示のみ
+  if (options.dryRun) {
+    console.log(content);
+    info(t("messages.export.dryRun"));
+    return;
+  }
+
+  // 確認
+  if (!options.force) {
+    const shouldSave = await confirm(
+      t("messages.export.fileConfirm", { count: patterns.length, path: outputPath })
+    );
+    if (!shouldSave) {
+      info(t("messages.export.cancelled"));
+      return;
+    }
+  }
+
+  await writeTextFile(outputPath, content);
+  success(t("messages.export.exportedFile", { count: patterns.length, path: outputPath }));
+  info(t("messages.export.importHint", { path: outputPath }));
+}
+
+/**
+ * Claude Code Skills / チーム共有エクスポートコマンド
  */
 export const exportCommand = new Command("export")
   .description(t("cli.commands.export.description"))
   .argument("[ids...]", t("cli.commands.export.argument"))
   .option("--skills", t("cli.commands.export.options.skills"), true)
+  .option("-o, --output <path>", t("cli.commands.export.options.output"))
   .option("-p, --project <path>", t("cli.commands.export.options.project"))
   .option("--global", t("cli.commands.export.options.global"))
   .option("--dry-run", t("cli.commands.export.options.dryRun"))
